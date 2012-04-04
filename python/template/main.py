@@ -65,6 +65,11 @@ def parser():
             action = "store",
             help = "Load only comma separated channels")
 
+    parser.add_option(
+            "--suffix",
+            action="store",
+            help="Suffix for canvases to be stored")
+
     return parser
 
 def main():

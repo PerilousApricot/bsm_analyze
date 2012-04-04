@@ -104,12 +104,19 @@ class Templates(object):
                         comment for example.
 
                         Note: 'data' can be used to reference all Data channels
+
+            suffix      is added to each canvas when saved if any isspecified
         
         '''
 
         self._verbose = options.verbose
         self._batch_mode = options.batch        # wait for Enter before exit
         self._input_filename = options.filename # ROOT file to load plots from
+
+        if options.suffix:
+            self._canvas_template = "{0}_" + options.suffix + ".pdf"
+        else:
+            self._canvas_template = "{0}.pdf"
 
         # Absolute scales for specific channels
         if options.scales:
@@ -227,7 +234,8 @@ class Templates(object):
 
         # Save canvases
         for obj in canvases:
-            obj.canvas.SaveAs("{0}.pdf".format(obj.canvas.GetName()))
+            obj.canvas.SaveAs(self._canvas_template.format(
+                obj.canvas.GetName()))
 
         if canvases and not self._batch_mode:
             raw_input('enter')
@@ -371,7 +379,7 @@ class Templates(object):
 
             legend.Draw("9 same")
 
-            canvas.SaveAs("met_fit.pdf")
+            canvas.SaveAs(self._canvas_template.format("met_fit"))
 
             # Print found fractions
             if self._verbose:
@@ -722,6 +730,7 @@ class Templates(object):
         result.append(["batch mode", self._batch_mode])
         result.append(["input filename", self._input_filename])
         result.append(["scales", self._scales if self._scales else ""])
+        result.append(["canvas", self._canvas_template.format("canvas")])
 
         result.append(["fractions",
                        self.fractions if self.fractions else ""])
