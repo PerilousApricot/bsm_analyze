@@ -56,6 +56,103 @@ namespace bsm
             DescriptionPtr _description;
     };
 
+    class Function
+    {
+        public:
+            virtual float value(const float &x) const = 0;
+            virtual float error_plus(const float &x) const = 0;
+            virtual float error_minus(const float &x) const = 0;
+    };
+
+    class BtagScale: public Function
+    {
+        // CSVT operating point
+        public:
+            virtual float value(const float &jet_pt) const;
+            virtual float error_plus(const float &jet_pt) const
+            {
+                return error(jet_pt);
+            }
+
+            virtual float error_minus(const float &jet_pt) const
+            {
+                return error(jet_pt);
+            }
+
+        protected:
+            virtual float error(const float &jet_pt) const;
+
+        private:
+            static const float ptmax[];
+            static const float errors[];
+    };
+
+    class CtagScale: public BtagScale
+    {
+        protected:
+            virtual float error(const float &jet_pt) const;
+    };
+
+    class LightScale: public Function
+    {
+        public:
+            virtual float value(const float &jet_pt) const;
+            virtual float error_plus(const float &jet_pt) const;
+            virtual float error_minus(const float &jet_pt) const;
+
+        private:
+            static float value_max(const float &jet_pt);
+            static float value_min(const float &jet_pt);
+    };
+
+    class BtagEfficiency: public Function
+    {
+        // Errors are not provided ... yet
+        public:
+            virtual float value(const float &discriminator) const;
+            virtual float error_plus(const float &discriminator) const
+            {
+                return 0;
+            }
+
+            virtual float error_minus(const float &discriminator) const
+            {
+                return 0;
+            }
+    };
+
+    class CtagEfficiency: public Function
+    {
+        // Errors are not provided ... yet
+        public:
+            virtual float value(const float &discriminator) const;
+            virtual float error_plus(const float &discriminator) const
+            {
+                return 0;
+            }
+
+            virtual float error_minus(const float &discriminator) const
+            {
+                return 0;
+            }
+    };
+
+    class LightEfficiency: public Function
+    {
+        // Errors are not provided ... yet
+        public:
+            virtual float value(const float &jet_pt) const;
+            virtual float error_plus(const float &jet_pt) const
+            {
+                return 0;
+            }
+
+            virtual float error_minus(const float &jet_pt) const
+            {
+                return 0;
+            }
+    };
+
     class Btag: public core::Object,
                 public BtagDelegate
     {
@@ -65,8 +162,8 @@ namespace bsm
 
             static float discriminator();
 
-            static float btag_efficiency(const float &discriminator);
-            static float btag_scale(const float &discriminator);
+            static float btag_efficiency(const float &jet_pt);
+            static float btag_scale(const float &jet_pt);
 
             static float mistag_efficiency(const float &jet_pt);
             static float mistag_scale(const float &jet_pt);

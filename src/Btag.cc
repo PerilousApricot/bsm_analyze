@@ -61,6 +61,167 @@ void BtagOptions::setSystematic(const BtagDelegate::Systematic &systematic)
 
 
 
+// Btag Scale
+//
+const float BtagScale::ptmax[] = {
+    40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500, 670
+};
+
+const float BtagScale::errors[] = {
+    0.0364717, 0.0362281, 0.0232876, 0.0249618, 0.0261482, 0.0290466,
+    0.0300033, 0.0453252, 0.0685143, 0.0653621, 0.0712586, 0.094589,
+    0.0777011, 0.0866563
+};
+
+float BtagScale::value(const float &jet_pt) const
+{
+    // underflow
+    //
+    if (30 > jet_pt)
+        return value(30);
+
+    // overflow
+    //
+    if (670 < jet_pt)
+        return value(670);
+
+    return 0.901615 *
+           (1. + 0.552628 * jet_pt) /
+           (1. + 0.547195 * jet_pt);
+}
+
+float BtagScale::error(const float &jet_pt) const
+{
+    if (30 > jet_pt)
+        return 0.12;
+
+    if (670 <= jet_pt)
+        return 2 * error(669);
+
+    uint32_t bin = 0;
+    for(; 14 > bin; ++bin)
+    {
+        if (BtagScale::ptmax[bin] > jet_pt)
+            break;
+    }
+
+    return BtagScale::errors[bin];
+}
+
+
+
+// Ctag scale
+//
+float CtagScale::error(const float &jet_pt) const
+{
+    return 2 * BtagScale::error(jet_pt);
+}
+
+
+
+// Light-tag scale
+//
+float LightScale::value(const float &jet_pt) const
+{
+    if (20 > jet_pt)
+        return value(20);
+
+    if (670 < jet_pt)
+        return value(670);
+
+    return 0.948463 + 
+           0.00288102 * jet_pt -
+           7.98091e-06 * pow(jet_pt, 2) + 
+           5.50157e-09 * pow(jet_pt, 3);
+}
+
+float LightScale::error_plus(const float &jet_pt) const
+{
+    return LightScale::value_max(jet_pt) - value(jet_pt);
+}
+
+float LightScale::error_minus(const float &jet_pt) const
+{
+    return value(jet_pt) - LightScale::value_min(jet_pt);
+}
+
+// Private
+//
+float LightScale::value_max(const float &jet_pt)
+{
+    if (20 > jet_pt)
+        return LightScale::value_max(20);
+
+    if (670 < jet_pt)
+        return LightScale::value_max(670);
+
+    return 0.997077 +
+           0.00473953 * jet_pt -
+           1.34985e-05 * pow(jet_pt, 2) +
+           1.0032e-08 * pow(jet_pt, 3);
+}
+
+float LightScale::value_min(const float &jet_pt)
+{
+    if (20 > jet_pt)
+        return LightScale::value_min(20);
+
+    if (670 < jet_pt)
+        return LightScale::value_min(670);
+
+    return 0.899715 +
+           0.00102278 * jet_pt -
+           2.46335e-06 * pow(jet_pt, 2) +
+           9.71143e-10 * pow(jet_pt, 3);
+}
+
+
+
+// Btag Efficiency
+//
+float BtagEfficiency::value(const float &discriminator) const
+{
+    return 1.04305075822 -
+           1.03328577451 * discriminator +
+           0.784721653518 * pow(discriminator, 2) +
+           1.26161794785 * pow(discriminator, 3) -
+           1.73338329789 * pow(discriminator, 4);
+}
+
+
+
+// Ctag efficiency
+//
+float CtagEfficiency::value(const float &discriminator) const
+{
+    return 0.780639301724 -
+           1.66657942274 * discriminator +
+           0.866697059943 * pow(discriminator, 2) +
+           1.52798999269 * pow(discriminator, 3) -
+           1.5734604211 * pow(discriminator, 4);
+}
+
+
+
+// Light Efficiency
+//
+float LightEfficiency::value(const float &jet_pt) const
+{
+    if (20 > jet_pt)
+        return value(20);
+
+    if (670 < jet_pt)
+        return value(670);
+
+    return 0.00315116 *
+            (1 -
+             0.00769281 * jet_pt +
+             2.58066e-05 * pow(jet_pt, 2) -
+             2.02149e-08 * pow(jet_pt, 3));
+}
+
+
+
 // Btag
 //
 Btag::Btag():
