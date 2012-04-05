@@ -49,6 +49,7 @@ namespace bsm
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
             TriggerDelegate *getTriggerDelegate() const;
+            PileupDelegate *getPileupDelegate() const;
 
             // Accessors
             //
@@ -63,7 +64,7 @@ namespace bsm
             // Object interface
             //
             virtual uint32_t id() const;
-
+            virtual ObjectPtr clone() const;
             virtual void print(std::ostream &) const;
 
         private:
@@ -75,6 +76,10 @@ namespace bsm
             H2ProxyPtr _btagged_parton_jets;
 
             boost::shared_ptr<Btag> _btag;
+            boost::shared_ptr<Pileup> _pileup;
+
+            bool _use_pileup;
+            float _pileup_weight;
     };
 }
 

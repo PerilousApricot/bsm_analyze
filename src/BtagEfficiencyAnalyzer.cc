@@ -9,10 +9,12 @@
 #include "bsm_input/interface/Algebra.h"
 #include "bsm_input/interface/Event.pb.h"
 #include "bsm_input/interface/GenParticle.pb.h"
+#include "bsm_input/interface/Input.pb.h"
 #include "bsm_input/interface/Jet.pb.h"
 #include "bsm_stat/interface/H2.h"
 #include "interface/Btag.h"
 #include "interface/BtagEfficiencyAnalyzer.h"
+#include "interface/Pileup.h"
 #include "interface/StatProxy.h"
 
 using namespace std;
@@ -115,7 +117,9 @@ void MatchedPartons::match(const GenParticle &particle)
 
 // Btag Efficiency Analyzer
 //
-BtagEfficiencyAnalyzer::BtagEfficiencyAnalyzer()
+BtagEfficiencyAnalyzer::BtagEfficiencyAnalyzer():
+    _use_pileup(false),
+    _pileup_weight(1)
 {
     _synch_selector.reset(new SynchSelector());
     monitor(_synch_selector);
@@ -128,10 +132,15 @@ BtagEfficiencyAnalyzer::BtagEfficiencyAnalyzer()
 
     _btag.reset(new Btag());
     monitor(_btag);
+
+    _pileup.reset(new Pileup());
+    monitor(_pileup);
 }
 
 BtagEfficiencyAnalyzer::BtagEfficiencyAnalyzer(
-        const BtagEfficiencyAnalyzer &object)
+        const BtagEfficiencyAnalyzer &object):
+    _use_pileup(false),
+    _pileup_weight(1)
 {
     _synch_selector = 
         dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
@@ -143,6 +152,13 @@ BtagEfficiencyAnalyzer::BtagEfficiencyAnalyzer(
     _btagged_parton_jets =
         dynamic_pointer_cast<H2Proxy>(object._btagged_parton_jets->clone());
     monitor(_btagged_parton_jets);
+
+    _btag.reset(new Btag());
+    monitor(_btag);
+
+    _pileup =
+        dynamic_pointer_cast<Pileup>(object._pileup->clone());
+    monitor(_pileup);
 }
 
 // Delegates
@@ -164,6 +180,11 @@ bsm::TriggerDelegate *BtagEfficiencyAnalyzer::getTriggerDelegate() const
     return _synch_selector.get();
 }
 
+bsm::PileupDelegate *BtagEfficiencyAnalyzer::getPileupDelegate() const
+{
+    return _pileup.get();
+}
+
 // Accessors
 //
 const stat::H2Ptr BtagEfficiencyAnalyzer::parton_jets() const
@@ -178,8 +199,13 @@ const stat::H2Ptr BtagEfficiencyAnalyzer::btagged_parton_jets() const
 
 // Processing
 //
-void BtagEfficiencyAnalyzer::onFileOpen(const string &filename, const Input *)
+void BtagEfficiencyAnalyzer::onFileOpen(const string &filename,
+                                        const Input *input)
 {
+    if (input->has_type())
+        _use_pileup = (Input::DATA != input->type());
+    else
+        _use_pileup = false;
 }
 
 void BtagEfficiencyAnalyzer::process(const Event *event)
@@ -191,6 +217,10 @@ void BtagEfficiencyAnalyzer::process(const Event *event)
     //
     if (_synch_selector->apply(event))
     {
+        _pileup_weight = _use_pileup ? 0 : 1;
+        if (_use_pileup)
+            _pileup_weight = _pileup->scale(event);
+
         MatchedPartons partons;
 
         partons.fill(_synch_selector->goodJets());
@@ -207,11 +237,13 @@ void BtagEfficiencyAnalyzer::process(const Event *event)
                 continue;
 
             parton_jets()->fill(abs(jet->second[0]->id()),
-                                pt(*jet->first->corrected_p4));
+                                pt(*jet->first->corrected_p4),
+                                _pileup_weight);
 
             if (_btag->is_tagged(*jet->first))
                 btagged_parton_jets()->fill(abs(jet->second[0]->id()),
-                                            pt(*jet->first->corrected_p4));
+                                            pt(*jet->first->corrected_p4),
+                                            _pileup_weight);
         }
     }
 }
@@ -221,6 +253,10 @@ uint32_t BtagEfficiencyAnalyzer::id() const
     return core::ID<BtagEfficiencyAnalyzer>::get();
 }
 
+BtagEfficiencyAnalyzer::ObjectPtr BtagEfficiencyAnalyzer::clone() const
+{
+    return ObjectPtr(new BtagEfficiencyAnalyzer(*this));
+}
 void BtagEfficiencyAnalyzer::print(ostream &out) const
 {
     out << *_synch_selector << endl;
