@@ -44,6 +44,14 @@ namespace bsm
             BtagEfficiencyAnalyzer();
             BtagEfficiencyAnalyzer(const BtagEfficiencyAnalyzer &);
 
+            // Delegates
+            //
+            JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
+            SynchSelectorDelegate *getSynchSelectorDelegate() const;
+            TriggerDelegate *getTriggerDelegate() const;
+
+            // Accessors
+            //
             const stat::H2Ptr parton_jets() const;
             const stat::H2Ptr btagged_parton_jets() const;
 
@@ -61,8 +69,12 @@ namespace bsm
         private:
             typedef boost::shared_ptr<H2Proxy> H2ProxyPtr;
 
+            boost::shared_ptr<SynchSelector> _synch_selector;
+
             H2ProxyPtr _parton_jets;
             H2ProxyPtr _btagged_parton_jets;
+
+            boost::shared_ptr<Btag> _btag;
     };
 }
 
