@@ -1226,6 +1226,9 @@ bsm::BtagDelegate *TemplateAnalyzer::getBtagDelegate() const
 
 void TemplateAnalyzer::didCounterAdd(const Counter *counter)
 {
+    if (_event_weight.is_invalid())
+        return;
+
     if (_counters.end() != _counters.find(counter))
         cutflow()->fill(_counters[counter], _event_weight.get());
 
@@ -1500,15 +1503,16 @@ void TemplateAnalyzer::process(const Event *event)
         if (_synch_selector_with_inverted_htlep->reconstruction(resonance.valid)
                 && _synch_selector_with_inverted_htlep->ltop(pt(resonance.ltop)))
         {
-            htlep()->fill(htlepValue(), _event_weight.get());
-            htlepBeforeHtlep()->fill(htlepValue(), _event_weight.get());
+            htlep()->fill(htlepValue(), _event_weight_inverted_htlep.get());
+            htlepBeforeHtlep()->fill(htlepValue(),
+                                     _event_weight_inverted_htlep.get());
             htlepBeforeHtlepNoWeight()->fill(htlepValue());
-            mttbarBeforeHtlep()->fill(mass(mttbar().mttbar) / 1000, _event_weight.get());
+            mttbarBeforeHtlep()->fill(mass(mttbar().mttbar) / 1000,
+                                      _event_weight_inverted_htlep.get());
         }
     } 
 
-    _event_weight.invalidate();
-    _event_weight_inverted_htlep.invalidate();
+    invalidate_cache();
 }
 
 uint32_t TemplateAnalyzer::id() const
@@ -1754,4 +1758,10 @@ WDecay TemplateAnalyzer::wdecayType(const GenParticle &particle) const
     } // end loop over children
 
     return decay;
+}
+
+void TemplateAnalyzer::invalidate_cache()
+{
+    _event_weight.invalidate();
+    _event_weight_inverted_htlep.invalidate();
 }

@@ -323,6 +323,8 @@ namespace bsm
             WDecay decayType(const GenParticle &) const;
             WDecay wdecayType(const GenParticle &) const;
 
+            void invalidate_cache();
+
             boost::shared_ptr<SynchSelector> _synch_selector;
             boost::shared_ptr<SynchSelector> _synch_selector_with_inverted_htlep;
 
