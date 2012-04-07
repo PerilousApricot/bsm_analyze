@@ -1299,8 +1299,12 @@ void TemplateAnalyzer::process(const Event *event)
     //
     if (_synch_selector->apply(event))
     {
-        _event_weight.set(_event_weight.get() *
-                          _synch_selector->countBtaggedJets().second);
+        if (!_synch_selector->maxBtag()->isDisabled() ||
+            !_synch_selector->minBtag()->isDisabled())
+        {
+            _event_weight.set(_event_weight.get() *
+                              _synch_selector->countBtaggedJets().second);
+        }
 
         njetsBeforeReconstruction()->fill(_synch_selector->goodJets().size(),
                                           _event_weight.get());
@@ -1483,9 +1487,13 @@ void TemplateAnalyzer::process(const Event *event)
     //
     if (_synch_selector_with_inverted_htlep->apply(event))
     {
-        _event_weight_inverted_htlep.set(
-                _event_weight_inverted_htlep.get() *
-                _synch_selector_with_inverted_htlep->countBtaggedJets().second);
+        if (!_synch_selector_with_inverted_htlep->maxBtag()->isDisabled() ||
+            !_synch_selector_with_inverted_htlep->minBtag()->isDisabled())
+        {
+            _event_weight_inverted_htlep.set(
+                    _event_weight_inverted_htlep.get() *
+                    _synch_selector_with_inverted_htlep->countBtaggedJets().second);
+        }
 
         Mttbar resonance = mttbar();
 

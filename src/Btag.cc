@@ -52,37 +52,44 @@ void BtagOptions::setSystematic(const BtagDelegate::Systematic &systematic)
 
 // BtagFunction
 //
-const uint32_t BtagFunction::bins = 14;
+BtagFunction::BtagFunction()
+{
+    const float bins[] = {
+        30, 40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500, 670
+    };
 
-const float BtagFunction::jet_pt_bins[] = {
-    30, 40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500, 670
-};
+    _bins.assign(bins, bins + 15);
+}
 
 const uint32_t BtagFunction::find_bin(const float &jet_pt) const
 {
-    if (BtagFunction::jet_pt_bins[0] > jet_pt)
+    if (jet_pt < _bins.front())
         return 0;
 
-    if (BtagFunction::jet_pt_bins[BtagFunction::bins] < jet_pt)
-        return BtagFunction::bins - 1;
+    if (jet_pt > _bins.back())
+        return _bins.size() - 2;
 
-    for(uint32_t bin = 1; BtagFunction::bins >= bin; ++bin)
-    {
-        if (BtagFunction::jet_pt_bins[bin] > jet_pt)
-            return bin - 1;
-    }
+    uint32_t bin = 0;
+    for(vector<float>::const_iterator bin_pt = _bins.begin();
+            _bins.end() != ++bin_pt && *bin_pt < jet_pt;
+            ++bin);
 
-    throw runtime_error("failed to find b-tag bin");
+    return bin;
 }
 
 
 // Btag Scale
 //
-const float BtagScale::errors[] = {
-    0.0364717, 0.0362281, 0.0232876, 0.0249618, 0.0261482, 0.0290466,
-    0.0300033, 0.0453252, 0.0685143, 0.0653621, 0.0712586, 0.094589,
-    0.0777011, 0.0866563
-};
+BtagScale::BtagScale()
+{
+    const float errors[] = {
+        0.0364717, 0.0362281, 0.0232876, 0.0249618, 0.0261482, 0.0290466,
+        0.0300033, 0.0453252, 0.0685143, 0.0653621, 0.0712586, 0.094589,
+        0.0777011, 0.0866563
+    };
+
+    _errors.assign(errors, errors + 14);
+}
 
 float BtagScale::value(const float &jet_pt) const
 {
@@ -109,7 +116,7 @@ float BtagScale::error(const float &jet_pt) const
     if (670 <= jet_pt)
         return 2 * error(669);
 
-    return BtagScale::errors[find_bin(jet_pt)];
+    return _errors.at(find_bin(jet_pt));
 }
 
 
@@ -141,23 +148,23 @@ float LightScale::value(const float &jet_pt) const
 
 float LightScale::error_plus(const float &jet_pt) const
 {
-    return LightScale::value_max(jet_pt) - value(jet_pt);
+    return value_max(jet_pt) - value(jet_pt);
 }
 
 float LightScale::error_minus(const float &jet_pt) const
 {
-    return value(jet_pt) - LightScale::value_min(jet_pt);
+    return value(jet_pt) - value_min(jet_pt);
 }
 
 // Private
 //
-float LightScale::value_max(const float &jet_pt)
+float LightScale::value_max(const float &jet_pt) const
 {
     if (20 > jet_pt)
-        return LightScale::value_max(20);
+        return value_max(20);
 
     if (670 < jet_pt)
-        return LightScale::value_max(670);
+        return value_max(670);
 
     return 0.997077 +
            0.00473953 * jet_pt -
@@ -165,13 +172,13 @@ float LightScale::value_max(const float &jet_pt)
            1.0032e-08 * pow(jet_pt, 3);
 }
 
-float LightScale::value_min(const float &jet_pt)
+float LightScale::value_min(const float &jet_pt) const
 {
     if (20 > jet_pt)
-        return LightScale::value_min(20);
+        return value_min(20);
 
     if (670 < jet_pt)
-        return LightScale::value_min(670);
+        return value_min(670);
 
     return 0.899715 +
            0.00102278 * jet_pt -
@@ -183,41 +190,50 @@ float LightScale::value_min(const float &jet_pt)
 
 // Btag Efficiency
 //
-const float BtagEfficiency::values[] = {
-    0.0, 0.0, 0.45700194476, 0.481780083914, 0.485380425249, 0.515662731626,
-    0.498871069179, 0.492350232848, 0.397570152294, 0.32058194111,
-    0.271581953854, 0.224112593547, 0.11042330955, 0.123300043702
-};
+BtagEfficiency::BtagEfficiency()
+{
+    const float values[] = {
+        0.0, 0.0, 0.45700194476, 0.481780083914, 0.485380425249, 0.515662731626,
+        0.498871069179, 0.492350232848, 0.397570152294, 0.32058194111,
+        0.271581953854, 0.224112593547, 0.11042330955, 0.123300043702
+    };
+
+    _values.assign(values, values + 14);
+}
 
 float BtagEfficiency::value(const float &jet_pt) const
 {
-    return BtagEfficiency::values[find_bin(jet_pt)];
+    return _values.at(find_bin(jet_pt));
 }
 
 
 
 // Light Efficiency
 //
-const float LightEfficiency::values[] = {
-    0.0, 0.0, 0.00665025786822, 0.00661178343117, 0.00383612052866,
-    0.0096833532719, 0.00611911636857, 0.00985837381435, 0.00888843910838,
-    0.0152255871887, 0.00625901203913, 0.00862685315311, 0.00729571108855,
-    0.01859141652
-};
+LightEfficiency::LightEfficiency()
+{
+    const float values[] = {
+        0.0, 0.0, 0.00665025786822, 0.00661178343117, 0.00383612052866,
+        0.0096833532719, 0.00611911636857, 0.00985837381435, 0.00888843910838,
+        0.0152255871887, 0.00625901203913, 0.00862685315311, 0.00729571108855,
+        0.01859141652
+    };
+
+    _values.assign(values, values + 14);
+}
 
 float LightEfficiency::value(const float &jet_pt) const
 {
-    return LightEfficiency::values[find_bin(jet_pt)];
+    return _values.at(find_bin(jet_pt));
 }
 
 
 
 // Btag
 //
-const float Btag::_discriminator = 0.898;
-
 Btag::Btag():
-    _systematic(NONE)
+    _systematic(NONE),
+    _discriminator(0.898)
 {
     _scale_btag.reset(new BtagScale());
     _eff_btag.reset(new BtagEfficiency());
@@ -230,7 +246,8 @@ Btag::Btag():
 }
 
 Btag::Btag(const Btag &object):
-    _systematic(object._systematic)
+    _systematic(object._systematic),
+    _discriminator(object._discriminator)
 {
     _scale_btag.reset(new BtagScale());
     _eff_btag.reset(new BtagEfficiency());
@@ -252,7 +269,7 @@ Btag::Info Btag::is_tagged(const CorrectedJet &jet)
     {
         if (Jet::BTag::CSV == btag->type())
         {
-            bool result = Btag::_discriminator < btag->discriminator();
+            bool result = _discriminator < btag->discriminator();
             float scale = 1;
 
             if (jet.jet->has_gen_parton())

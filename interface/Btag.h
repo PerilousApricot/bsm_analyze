@@ -6,6 +6,8 @@
 #ifndef BTAG_H
 #define BTAG_H
 
+#include <vector>
+
 #include "bsm_core/interface/Object.h"
 #include "interface/bsm_fwd.h"
 #include "interface/AppController.h"
@@ -52,6 +54,8 @@ namespace bsm
     class BtagFunction
     {
         public:
+            BtagFunction();
+
             virtual ~BtagFunction()
             {
             };
@@ -64,14 +68,15 @@ namespace bsm
             const uint32_t find_bin(const float &jet_pt) const;
 
         private:
-            static const uint32_t bins;
-            static const float jet_pt_bins[];
+            std::vector<float> _bins;
     };
 
     class BtagScale: public BtagFunction
     {
         // CSVT operating point
         public:
+            BtagScale();
+
             virtual float value(const float &jet_pt) const;
             virtual float error_plus(const float &jet_pt) const
             {
@@ -87,7 +92,7 @@ namespace bsm
             virtual float error(const float &jet_pt) const;
 
         private:
-            static const float errors[];
+            std::vector<float> _errors;
     };
 
     class CtagScale: public BtagScale
@@ -104,14 +109,16 @@ namespace bsm
             virtual float error_minus(const float &jet_pt) const;
 
         private:
-            static float value_max(const float &jet_pt);
-            static float value_min(const float &jet_pt);
+            float value_max(const float &jet_pt) const;
+            float value_min(const float &jet_pt) const;
     };
 
     class BtagEfficiency: public BtagFunction
     {
         // Errors are not provided ... yet
         public:
+            BtagEfficiency();
+
             virtual float value(const float &jet_pt) const;
             virtual float error_plus(const float &jet_pt) const
             {
@@ -124,7 +131,7 @@ namespace bsm
             }
 
         private:
-            static const float values[];
+            std::vector<float> _values;
     };
 
     class CtagEfficiency: public BtagEfficiency
@@ -135,10 +142,12 @@ namespace bsm
     {
         // Errors are not provided ... yet
         public:
+            LightEfficiency();
+
             virtual float value(const float &jet_pt) const;
 
         private:
-            static const float values[];
+            std::vector<float> _values;
     };
 
     class Btag: public core::Object,
@@ -169,7 +178,7 @@ namespace bsm
 
             Systematic _systematic;
 
-            static const float _discriminator;
+            const float _discriminator;
 
             typedef boost::shared_ptr<BtagFunction> BtagFunctionPtr;
 
