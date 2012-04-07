@@ -112,6 +112,7 @@ class AppController:
                 os.mkdir(folder)
 
             print("{0:<20}".format(folder), end = " ... ")
+            sys.stdout.flush()
             self.pushd(folder)
 
             if not os.path.exists("input.txt"):
