@@ -412,8 +412,8 @@ namespace bsm
 
             boost::shared_ptr<ResonanceReconstructor> _reconstructor;
 
-            Cache<float> _event_weight;
-            Cache<float> _event_weight_inverted_htlep;
+            boost::shared_ptr<Cache<float> > _event_weight;
+            boost::shared_ptr<Cache<float> > _event_weight_inverted_htlep;
     };
 }
 
