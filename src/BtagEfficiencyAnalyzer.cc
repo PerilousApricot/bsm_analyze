@@ -16,104 +16,12 @@
 #include "interface/BtagEfficiencyAnalyzer.h"
 #include "interface/Pileup.h"
 #include "interface/StatProxy.h"
+#include "interface/SynchSelector.h"
 
 using namespace std;
 
 using namespace boost;
 using namespace bsm;
-using gen::MatchedPartons;
-
-// Matched Jets
-//
-void MatchedPartons::fill(const GoodJets &good_jets)
-{
-    jets.clear();
-
-    for(GoodJets::const_iterator jet = good_jets.begin();
-            good_jets.end() != jet;
-            ++jet)
-    {
-        jets[&*jet];
-    }
-}
-
-void MatchedPartons::match(const Event *event)
-{
-    typedef ::google::protobuf::RepeatedPtrField<GenParticle> GenParticles;
-
-    const GenParticles &particles = event->gen_particle();
-    for(GenParticles::const_iterator particle = particles.begin();
-            particles.end() != particle;
-            ++particle)
-    {
-        if (3 != particle->status())
-            continue;
-
-        match(*particle);
-    }
-}
-
-// Private
-//
-void MatchedPartons::match(const GenParticle &particle)
-{
-    // Process particle
-    //
-    const int32_t pdg_id = abs(particle.id());
-
-    // Keep only quarks: u, d, c, s, b - and gluons, e.g. no t-quark
-    //
-    if ((0 < pdg_id && 7 > pdg_id) ||
-        21 == pdg_id)
-    {
-        for(MatchedJets::iterator jet = jets.begin();
-                jets.end() != jet;
-                ++jet)
-        {
-            if (0.1 > dr(*jet->first->corrected_p4, 
-                         particle.physics_object().p4()))
-            {
-                bool parton_is_found = false;
-                for(MatchedPartons::Partons::const_iterator parton =
-                            jet->second.begin();
-                        jet->second.end() != parton;
-                        ++parton)
-                {
-                    if (abs((*parton)->id()) == pdg_id &&
-                        (*parton)->physics_object().p4() ==
-                            particle.physics_object().p4())
-                    {
-                        parton_is_found = true;
-
-                        break;
-                    }
-                }
-
-                if (!parton_is_found)
-                    jet->second.push_back(&particle);
-                
-                break;
-            }
-        }
-    }
-
-    // Take care of children
-    //
-    typedef ::google::protobuf::RepeatedPtrField<GenParticle> GenParticles;
-
-    const GenParticles &children = particle.child();
-    for(GenParticles::const_iterator child = children.begin();
-            children.end() != child;
-            ++child)
-    {
-        if (3 != child->status())
-            continue;
-
-        match(*child);
-    }
-}
-
-
 
 // Btag Efficiency Analyzer
 //
@@ -221,29 +129,26 @@ void BtagEfficiencyAnalyzer::process(const Event *event)
         if (_use_pileup)
             _pileup_weight = _pileup->scale(event);
 
-        MatchedPartons partons;
-
-        partons.fill(_synch_selector->goodJets());
-        partons.match(event);
-
-        // Use only those, that have one parton matched to one jet
-        //
-        for(MatchedPartons::MatchedJets::const_iterator jet =
-                    partons.jets.begin();
-                partons.jets.end() != jet;
+        typedef SynchSelector::GoodJets GoodJets;
+        for(GoodJets::const_iterator jet = _synch_selector->goodJets().begin();
+                _synch_selector->goodJets().end() != jet;
                 ++jet)
         {
-            if (1 != jet->second.size())
-                continue;
+            if (jet->jet->has_gen_parton())
+            {
+                const uint32_t pdg_id = abs(jet->jet->gen_parton().id());
+                if ((0 < pdg_id && 6 > pdg_id) || 21 == pdg_id)
+                {
+                    parton_jets()->fill(pdg_id,
+                                        pt(*jet->corrected_p4),
+                                        _pileup_weight);
 
-            parton_jets()->fill(abs(jet->second[0]->id()),
-                                pt(*jet->first->corrected_p4),
-                                _pileup_weight);
-
-            if (_btag->is_tagged(*jet->first))
-                btagged_parton_jets()->fill(abs(jet->second[0]->id()),
-                                            pt(*jet->first->corrected_p4),
-                                            _pileup_weight);
+                    if (_btag->is_tagged(*jet).first)
+                        btagged_parton_jets()->fill(pdg_id,
+                                                    pt(*jet->corrected_p4),
+                                                    _pileup_weight);
+                }
+            }
         }
     }
 }

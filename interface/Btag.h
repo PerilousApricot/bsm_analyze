@@ -6,8 +6,6 @@
 #ifndef BTAG_H
 #define BTAG_H
 
-#include <boost/random.hpp>
-
 #include "bsm_core/interface/Object.h"
 #include "interface/bsm_fwd.h"
 #include "interface/AppController.h"
@@ -29,10 +27,6 @@ namespace bsm
             {
             }
 
-            virtual void setUseBtagSF()
-            {
-            }
-
             virtual void setSystematic(const Systematic &)
             {
             }
@@ -50,21 +44,31 @@ namespace bsm
             virtual DescriptionPtr description() const;
 
         private:
-            void setUseBtagSF();
             void setSystematic(const BtagDelegate::Systematic &);
 
             DescriptionPtr _description;
     };
 
-    class Function
+    class BtagFunction
     {
         public:
+            virtual ~BtagFunction()
+            {
+            };
+
             virtual float value(const float &x) const = 0;
             virtual float error_plus(const float &x) const = 0;
             virtual float error_minus(const float &x) const = 0;
+
+        protected:
+            const uint32_t find_bin(const float &jet_pt) const;
+
+        private:
+            static const uint32_t bins;
+            static const float jet_pt_bins[];
     };
 
-    class BtagScale: public Function
+    class BtagScale: public BtagFunction
     {
         // CSVT operating point
         public:
@@ -83,7 +87,6 @@ namespace bsm
             virtual float error(const float &jet_pt) const;
 
         private:
-            static const float ptmax[];
             static const float errors[];
     };
 
@@ -93,7 +96,7 @@ namespace bsm
             virtual float error(const float &jet_pt) const;
     };
 
-    class LightScale: public Function
+    class LightScale: public BtagFunction
     {
         public:
             virtual float value(const float &jet_pt) const;
@@ -105,39 +108,7 @@ namespace bsm
             static float value_min(const float &jet_pt);
     };
 
-    class BtagEfficiency: public Function
-    {
-        // Errors are not provided ... yet
-        public:
-            virtual float value(const float &discriminator) const;
-            virtual float error_plus(const float &discriminator) const
-            {
-                return 0;
-            }
-
-            virtual float error_minus(const float &discriminator) const
-            {
-                return 0;
-            }
-    };
-
-    class CtagEfficiency: public Function
-    {
-        // Errors are not provided ... yet
-        public:
-            virtual float value(const float &discriminator) const;
-            virtual float error_plus(const float &discriminator) const
-            {
-                return 0;
-            }
-
-            virtual float error_minus(const float &discriminator) const
-            {
-                return 0;
-            }
-    };
-
-    class LightEfficiency: public Function
+    class BtagEfficiency: public BtagFunction
     {
         // Errors are not provided ... yet
         public:
@@ -151,34 +122,38 @@ namespace bsm
             {
                 return 0;
             }
+
+        private:
+            static const float values[];
+    };
+
+    class CtagEfficiency: public BtagEfficiency
+    {
+    };
+
+    class LightEfficiency: public BtagEfficiency
+    {
+        // Errors are not provided ... yet
+        public:
+            virtual float value(const float &jet_pt) const;
+
+        private:
+            static const float values[];
     };
 
     class Btag: public core::Object,
                 public BtagDelegate
     {
         public:
+            typedef std::pair<bool, const float> Info;
+
             Btag();
             Btag(const Btag &);
 
-            static float discriminator();
-
-            static float btag_efficiency(const float &jet_pt);
-            static float btag_scale(const float &jet_pt);
-
-            static float mistag_efficiency(const float &jet_pt);
-            static float mistag_scale(const float &jet_pt);
-            static float mistag_scale_sigma_up(const float &jet_pt);
-            static float mistag_scale_sigma_down(const float &jet_pt);
-
-            float btag_scale_with_systematic(const float &discriminator,
-                                             const float &uncertainty);
-            float mistag_scale_with_systematic(const float &jet_pt);
-
-            bool is_tagged(const CorrectedJet &jet);
+            Info is_tagged(const CorrectedJet &jet);
 
             // BtagDelegate interface
             //
-            virtual void setUseBtagSF();
             virtual void setSystematic(const Systematic &);
 
             // Object interface
@@ -192,15 +167,20 @@ namespace bsm
             //
             Btag &operator =(const Btag &);
 
-            bool correct(const bool &is_tagged,
-                         const float &scale,
-                         const float &efficiency);
-
-            boost::shared_ptr<boost::mt19937> _generator;
-
             Systematic _systematic;
 
-            bool _use_sf;
+            static const float _discriminator;
+
+            typedef boost::shared_ptr<BtagFunction> BtagFunctionPtr;
+
+            BtagFunctionPtr _scale_btag;
+            BtagFunctionPtr _eff_btag;
+
+            BtagFunctionPtr _scale_ctag;
+            BtagFunctionPtr _eff_ctag;
+
+            BtagFunctionPtr _scale_light;
+            BtagFunctionPtr _eff_light;
     };
 }
 

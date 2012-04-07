@@ -101,6 +101,10 @@ namespace bsm
             typedef std::vector<CorrectedJet> GoodJets;
             typedef LorentzVectorPtr GoodMET;
 
+            // first    Number of b-tagged jets
+            // second   event weight
+            typedef std::pair<uint32_t, float> Btags;
+
             enum Selection
             {
                 PRESELECTION = 0,
@@ -170,7 +174,7 @@ namespace bsm
             bool ltop(const float &value); // apply ltop cut
             bool chi2(const float &value);
 
-            uint32_t countBtaggedJets();
+            Btags countBtaggedJets();
 
             // SynchSelectorDelegate interface
             //
@@ -288,7 +292,7 @@ namespace bsm
 
             // cache
             //
-            Cache<uint32_t> _btagged_jets;
+            Cache<Btags> _btags;
     };
 
     // Helpers

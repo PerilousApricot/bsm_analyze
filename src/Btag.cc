@@ -19,11 +19,6 @@ BtagOptions::BtagOptions()
 {
     _description.reset(new po::options_description("Btag Options"));
     _description->add_options()
-        ("use-btag-sf",
-         po::value<bool>()->implicit_value(true)->notifier(
-             boost::bind(&BtagOptions::setUseBtagSF, this)),
-         "Use b-tagging Scale Factors")
-
         ("btag-up",
          po::value<bool>()->implicit_value(true)->notifier(
              boost::bind(&BtagOptions::setSystematic, this, BtagDelegate::UP)),
@@ -45,12 +40,6 @@ BtagOptions::DescriptionPtr BtagOptions::description() const
 
 // Private
 //
-void BtagOptions::setUseBtagSF()
-{
-    if (delegate())
-        delegate()->setUseBtagSF();
-}
-
 void BtagOptions::setSystematic(const BtagDelegate::Systematic &systematic)
 {
     if (!delegate())
@@ -61,12 +50,34 @@ void BtagOptions::setSystematic(const BtagDelegate::Systematic &systematic)
 
 
 
-// Btag Scale
+// BtagFunction
 //
-const float BtagScale::ptmax[] = {
-    40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500, 670
+const uint32_t BtagFunction::bins = 14;
+
+const float BtagFunction::jet_pt_bins[] = {
+    30, 40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500, 670
 };
 
+const uint32_t BtagFunction::find_bin(const float &jet_pt) const
+{
+    if (BtagFunction::jet_pt_bins[0] > jet_pt)
+        return 0;
+
+    if (BtagFunction::jet_pt_bins[BtagFunction::bins] < jet_pt)
+        return BtagFunction::bins - 1;
+
+    for(uint32_t bin = 1; BtagFunction::bins >= bin; ++bin)
+    {
+        if (BtagFunction::jet_pt_bins[bin] > jet_pt)
+            return bin - 1;
+    }
+
+    throw runtime_error("failed to find b-tag bin");
+}
+
+
+// Btag Scale
+//
 const float BtagScale::errors[] = {
     0.0364717, 0.0362281, 0.0232876, 0.0249618, 0.0261482, 0.0290466,
     0.0300033, 0.0453252, 0.0685143, 0.0653621, 0.0712586, 0.094589,
@@ -98,14 +109,7 @@ float BtagScale::error(const float &jet_pt) const
     if (670 <= jet_pt)
         return 2 * error(669);
 
-    uint32_t bin = 0;
-    for(; 14 > bin; ++bin)
-    {
-        if (BtagScale::ptmax[bin] > jet_pt)
-            break;
-    }
-
-    return BtagScale::errors[bin];
+    return BtagScale::errors[find_bin(jet_pt)];
 }
 
 
@@ -179,140 +183,66 @@ float LightScale::value_min(const float &jet_pt)
 
 // Btag Efficiency
 //
-float BtagEfficiency::value(const float &discriminator) const
+const float BtagEfficiency::values[] = {
+    0.0, 0.0, 0.45700194476, 0.481780083914, 0.485380425249, 0.515662731626,
+    0.498871069179, 0.492350232848, 0.397570152294, 0.32058194111,
+    0.271581953854, 0.224112593547, 0.11042330955, 0.123300043702
+};
+
+float BtagEfficiency::value(const float &jet_pt) const
 {
-    return 1.04305075822 -
-           1.03328577451 * discriminator +
-           0.784721653518 * pow(discriminator, 2) +
-           1.26161794785 * pow(discriminator, 3) -
-           1.73338329789 * pow(discriminator, 4);
-}
-
-
-
-// Ctag efficiency
-//
-float CtagEfficiency::value(const float &discriminator) const
-{
-    return 0.780639301724 -
-           1.66657942274 * discriminator +
-           0.866697059943 * pow(discriminator, 2) +
-           1.52798999269 * pow(discriminator, 3) -
-           1.5734604211 * pow(discriminator, 4);
+    return BtagEfficiency::values[find_bin(jet_pt)];
 }
 
 
 
 // Light Efficiency
 //
+const float LightEfficiency::values[] = {
+    0.0, 0.0, 0.00665025786822, 0.00661178343117, 0.00383612052866,
+    0.0096833532719, 0.00611911636857, 0.00985837381435, 0.00888843910838,
+    0.0152255871887, 0.00625901203913, 0.00862685315311, 0.00729571108855,
+    0.01859141652
+};
+
 float LightEfficiency::value(const float &jet_pt) const
 {
-    if (20 > jet_pt)
-        return value(20);
-
-    if (670 < jet_pt)
-        return value(670);
-
-    return 0.00315116 *
-            (1 -
-             0.00769281 * jet_pt +
-             2.58066e-05 * pow(jet_pt, 2) -
-             2.02149e-08 * pow(jet_pt, 3));
+    return LightEfficiency::values[find_bin(jet_pt)];
 }
 
 
 
 // Btag
 //
+const float Btag::_discriminator = 0.898;
+
 Btag::Btag():
-    _systematic(NONE),
-    _use_sf(false)
+    _systematic(NONE)
 {
-    _generator.reset(new boost::mt19937());
+    _scale_btag.reset(new BtagScale());
+    _eff_btag.reset(new BtagEfficiency());
+
+    _scale_ctag.reset(new CtagScale());
+    _eff_ctag.reset(new CtagEfficiency());
+
+    _scale_light.reset(new LightScale());
+    _eff_light.reset(new LightEfficiency());
 }
 
 Btag::Btag(const Btag &object):
-    _systematic(object._systematic),
-    _use_sf(object._use_sf)
+    _systematic(object._systematic)
 {
-    _generator.reset(new boost::mt19937());
+    _scale_btag.reset(new BtagScale());
+    _eff_btag.reset(new BtagEfficiency());
+
+    _scale_ctag.reset(new CtagScale());
+    _eff_ctag.reset(new CtagEfficiency());
+
+    _scale_light.reset(new LightScale());
+    _eff_light.reset(new LightEfficiency());
 }
 
-float Btag::discriminator()
-{
-    return 0.898;
-}
-
-float Btag::btag_efficiency(const float &discriminator)
-{
-    return 1.04305075822 -
-           1.03328577451 * discriminator +
-           0.784721653518 * pow(discriminator, 2) +
-           1.26161794785 * pow(discriminator, 3) -
-           1.73338329789 * pow(discriminator, 4);
-}
-
-float Btag::btag_scale(const float &discriminator)
-{
-    return 1.04926963159 - 0.113472343605 * discriminator;
-}
-
-float Btag::mistag_efficiency(const float &jet_pt)
-{
-    return 0.00315116 * (1 -
-                         0.00769281 * jet_pt +
-                         2.58066e-05 * pow(jet_pt, 2) -
-                         2.02149e-08 * pow(jet_pt, 3));
-}
-
-float Btag::mistag_scale(const float &jet_pt)
-{
-    return 0.948463 +
-           0.00288102 * jet_pt -
-           7.98091e-06 * pow(jet_pt, 2) +
-           5.50157e-09 * pow(jet_pt, 3);
-}
-
-float Btag::mistag_scale_sigma_down(const float &jet_pt)
-{
-    return 0.899715 +
-           0.00102278 * jet_pt -
-           2.46335e-06 * pow(jet_pt, 2) +
-           9.71143e-10 * pow(jet_pt, 3);
-}
-
-float Btag::mistag_scale_sigma_up(const float &jet_pt)
-{
-    return 0.997077 +
-           0.00473953 * jet_pt -
-           1.34985e-05 * pow(jet_pt, 2) +
-           1.0032e-08 * pow(jet_pt, 3);
-}
-
-float Btag::btag_scale_with_systematic(const float &discriminator,
-                                       const float &uncertainty)
-{
-    float scale = Btag::btag_scale(discriminator);
-    
-    if (_systematic)
-        scale += _systematic * uncertainty;
-
-    return scale;
-}
-
-float Btag::mistag_scale_with_systematic(const float &jet_pt)
-{
-    switch(_systematic)
-    {
-        case DOWN: return Btag::mistag_scale_sigma_down(jet_pt);
-        case NONE: return Btag::mistag_scale(jet_pt);
-        case UP: return Btag::mistag_scale_sigma_up(jet_pt);
-
-        default: throw runtime_error("unsupported systematic type used");
-    }
-}
-
-bool Btag::is_tagged(const CorrectedJet &jet)
+Btag::Info Btag::is_tagged(const CorrectedJet &jet)
 {
     typedef ::google::protobuf::RepeatedPtrField<Jet::BTag> BTags;
 
@@ -322,62 +252,59 @@ bool Btag::is_tagged(const CorrectedJet &jet)
     {
         if (Jet::BTag::CSV == btag->type())
         {
-            const float discriminator = btag->discriminator();
-            bool result = Btag::discriminator() < discriminator;
+            bool result = Btag::_discriminator < btag->discriminator();
+            float scale = 1;
 
-            if (_use_sf && jet.jet->has_gen_parton())
+            if (jet.jet->has_gen_parton())
             {
-                float scale = 0;
-                float efficiency = 0;
+                BtagFunctionPtr _scale_function;
+                BtagFunctionPtr _eff_function;
 
                 switch(abs(jet.jet->gen_parton().id()))
                 {
-                    case 5:
-                        scale = btag_scale_with_systematic(discriminator, 0.04);
-                        efficiency = Btag::btag_efficiency(discriminator);
-
+                    case 5: // b-quark
+                        _scale_function = _scale_btag;
+                        _eff_function = _eff_btag;
                         break;
 
-                    case 4:
-                        scale = btag_scale_with_systematic(discriminator, 0.08);
-                        efficiency = Btag::btag_efficiency(discriminator);
-
+                    case 4: // c-quark
+                        _scale_function = _scale_ctag;
+                        _eff_function = _eff_ctag;
                         break;
 
-                    case 3: // fall through
-                    case 2: // fall through
-                    case 1:
-                        const float jet_pt = pt(*jet.corrected_p4);
+                    case 3: // s-quark
+                    case 2: // d-quark
+                    case 1: // u-quark
+                    case 21: // gluon
+                        _scale_function = _scale_light;
+                        _eff_function = _eff_light;
+                        break;
 
-                        scale = mistag_scale_with_systematic(jet_pt);
-                        efficiency = Btag::mistag_efficiency(jet_pt);
-
+                    default:
                         break;
                 }
 
-                if (scale && efficiency)
+                if (_scale_function && _eff_function)
                 {
-                    _generator->seed(static_cast<unsigned int>(
-                                        sin(phi(*jet.corrected_p4) * 1000000)));
+                    const float jet_pt = pt(*jet.corrected_p4);
 
-                    result = correct(result, scale, efficiency);
+                    scale = result ?
+                            _scale_function->value(jet_pt) :
+                            (1 - _scale_function->value(jet_pt) *
+                                    _eff_function->value(jet_pt)) /
+                                (1 - _eff_function->value(jet_pt));
                 }
             }
 
-            return result;
+            return make_pair(result, scale);
         }
     }
 
-    return false;
+    return make_pair(false, 1);
 }
 
 // BtagDelegate interface
 //
-void Btag::setUseBtagSF()
-{
-    _use_sf = true;
-}
-
 void Btag::setSystematic(const Systematic &systematic)
 {
     _systematic = systematic;
@@ -397,35 +324,4 @@ Btag::ObjectPtr Btag::clone() const
 
 void Btag::print(std::ostream &out) const
 {
-}
-
-
-
-// Private
-//
-bool Btag::correct(const bool &is_tagged,
-                   const float &scale,
-                   const float &efficiency)
-{
-    if (1 == scale)
-        return is_tagged;
-
-    bool result = is_tagged;
-    if (1 < scale)
-    {
-        if (!is_tagged)
-        {
-            if ((*_generator)() < (1 - scale) / (1 - scale / efficiency))
-                result = true;
-        }
-    }
-    else
-    {
-        if (is_tagged &&
-            (*_generator)() > scale)
-
-            result = false;
-    }
-
-    return result;
 }

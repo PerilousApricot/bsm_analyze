@@ -437,23 +437,27 @@ SynchSelector::CutPtr SynchSelector::chi2() const
     return _chi2;
 }
 
-uint32_t SynchSelector::countBtaggedJets()
+SynchSelector::Btags SynchSelector::countBtaggedJets()
 {
-    if (!_btagged_jets.is_valid())
+    if (!_btags.is_valid())
     {
         uint32_t btags = 0;
+        float scale = 1;
         for(GoodJets::const_iterator jet = _good_jets.begin();
                 _good_jets.end() != jet;
                 ++jet)
         {
-            if (_btag->is_tagged(*jet))
+            Btag::Info info = _btag->is_tagged(*jet);
+            if (info.first)
                 ++btags;
+
+            scale *= info.second;
         }
 
-        _btagged_jets.set(btags);
+        _btags.set(make_pair(btags, scale));
     }
 
-    return _btagged_jets.get();
+    return _btags.get();
 }
 
 bool SynchSelector::apply(const Event *event)
@@ -947,7 +951,7 @@ bool SynchSelector::maxBtags()
     if (maxBtag()->isDisabled())
         return true;
 
-    return maxBtag()->apply(countBtaggedJets())
+    return maxBtag()->apply(countBtaggedJets().first)
         && (_cutflow->apply(MAX_BTAG), true);
 }
 
@@ -956,7 +960,7 @@ bool SynchSelector::minBtags()
     if (minBtag()->isDisabled())
         return true;
 
-    return minBtag()->apply(countBtaggedJets())
+    return minBtag()->apply(countBtaggedJets().first)
         && (_cutflow->apply(MIN_BTAG), true);
 }
 
@@ -1051,7 +1055,7 @@ bool SynchSelector::isolation(const LorentzVector *p4, const PFIsolation *isolat
 
 void SynchSelector::invalidate_cache()
 {
-    _btagged_jets.invalidate();
+    _btags.invalidate();
 }
 
 void SynchSelector::selectGoodPrimaryVertices(const Event *event)

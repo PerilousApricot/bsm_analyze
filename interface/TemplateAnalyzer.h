@@ -374,8 +374,6 @@ namespace bsm
             H1ProxyPtr _htop_chi2;
             H1ProxyPtr _ltop_chi2;
 
-            const Event *_event;
-
             Counter *_secondary_lepton_counter;
             Counter *_leading_jet_counter;
             Counter *_htlep_counter;
@@ -383,11 +381,8 @@ namespace bsm
             boost::shared_ptr<Pileup> _pileup;
 
             bool _use_pileup;
-            float _pileup_weight;
-
             bool _wjets_input;
             bool _apply_wjet_correction;
-            float _wjets_weight;
 
             P4MonitorPtr _first_jet;
             P4MonitorPtr _second_jet;
@@ -414,6 +409,9 @@ namespace bsm
             H1ProxyPtr _njet2_dr_lepton_jet2_after_reconstruction;
 
             boost::shared_ptr<ResonanceReconstructor> _reconstructor;
+
+            Cache<float> _event_weight;
+            Cache<float> _event_weight_inverted_htlep;
     };
 }
 
