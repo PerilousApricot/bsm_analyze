@@ -91,6 +91,7 @@ class Comparator(object):
         loader = {
                 "jes": SystematicLoader,
                 "pileup": SystematicLoader,
+                "btag": SystematicLoader,
                 "scaling": ScalingSystematicLoader,
                 "matching": MatchingSystematicLoader
                 }.get(self._systematic)
