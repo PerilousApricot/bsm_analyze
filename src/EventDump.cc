@@ -52,7 +52,7 @@ EventDumpOptions::EventDumpOptions()
         ("format",
          po::value<string>()->notifier(
              boost::bind(&EventDumpOptions::setFormatLevel, this, _1)),
-         "Level of the event print content")
+         "Level of the event print content: short, medium, full")
     ;
 }
 
