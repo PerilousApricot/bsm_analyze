@@ -1264,7 +1264,23 @@ void TemplateAnalyzer::onFileOpen(const std::string &filename, const Input *inpu
     if (input->has_type())
     {
         _use_pileup = (Input::DATA != input->type());
-        _wjets_input = (Input::WJETS == input->type());
+
+        if (Input::WJETS == input->type())
+        {
+            _wjets_input = true;
+        }
+        else
+        {
+            _wjets_input = false;
+
+            if (!_synch_selector->wflavor()->isDisabled())
+            {
+                clog << "warning: W flavor split is enabled "
+                    << "but input is not W+jets - force disable" << endl;
+
+                _synch_selector->wflavor()->disable();
+            }
+        }
     }
     else
     {
