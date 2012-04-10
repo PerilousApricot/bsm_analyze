@@ -42,18 +42,21 @@ int main(int argc, char *argv[])
         shared_ptr<TriggerOptions> trigger_options(new TriggerOptions());
         shared_ptr<ResonanceDumpOptions> dump_options(new ResonanceDumpOptions());
         shared_ptr<EventDumpOptions> event_options(new EventDumpOptions());
+        boost::shared_ptr<TemplatesOptions> templates_options(new TemplatesOptions());
 
         jec_options->setDelegate(analyzer->getJetEnergyCorrectionDelegate());
         synch_selector_options->setDelegate(analyzer->getSynchSelectorDelegate());
         trigger_options->setDelegate(analyzer->getTriggerDelegate());
         dump_options->setDelegate(analyzer.get());
         event_options->setDelegate(analyzer.get());
+        templates_options->setDelegate(analyzer.get());
 
         app->addOptions(*jec_options);
         app->addOptions(*synch_selector_options);
         app->addOptions(*trigger_options);
         app->addOptions(*dump_options);
         app->addOptions(*event_options);
+        app->addOptions(*templates_options);
 
         app->setAnalyzer(analyzer);
 

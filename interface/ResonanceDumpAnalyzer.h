@@ -18,6 +18,7 @@
 #include "interface/EventDump.h"
 #include "interface/HadronicTopAnalyzer.h"
 #include "interface/Monitor.h"
+#include "interface/TemplateAnalyzer.h"
 
 namespace bsm
 {
@@ -41,7 +42,8 @@ namespace bsm
     class ResonanceDumpAnalyzer:
         public Analyzer,
         public ResonanceDumpDelegate,
-        public EventDumpDelegate
+        public EventDumpDelegate,
+        public TemplatesDelegate
     {
         public:
             ResonanceDumpAnalyzer();
@@ -59,6 +61,11 @@ namespace bsm
             // Event dump delegate interface
             //
             virtual void setFormatLevel(const Level &);
+
+            // Template delegate interface
+            //
+            virtual void setChi2Reconstruction(const Chi2Discriminators &ltop,
+                                               const Chi2Discriminators &htop);
 
             // Anlayzer interface
             //
