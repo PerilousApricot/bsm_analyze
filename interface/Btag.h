@@ -157,6 +157,13 @@ namespace bsm
             std::vector<float> _values;
     };
 
+    class LightEfficiencyData: public BtagEfficiency
+    {
+        // Errors are not provided ... yet
+        public:
+            virtual float value(const float &jet_pt) const;
+    };
+
     class Btag: public core::Object,
                 public BtagDelegate
     {
@@ -192,6 +199,11 @@ namespace bsm
                         const BtagFunctionPtr &eff,
                         const Systematic &sytematic);
 
+            float scale_data(const bool &is_tagged,
+                             const float &jet_pt,
+                             const BtagFunctionPtr &sf,
+                             const BtagFunctionPtr &eff,
+                             const Systematic &sytematic);
 
             Systematic _btag_systematic;
             Systematic _mistag_systematic;

@@ -239,6 +239,24 @@ float LightEfficiency::value(const float &jet_pt) const
 
 
 
+// Light Efficiency from Data
+//
+float LightEfficiencyData::value(const float &jet_pt) const
+{
+    if (30 > jet_pt)
+        return value(30);
+
+    if (670 < jet_pt)
+        return value(670);
+
+    return 0.00315116 * (1 - 
+                         0.00769281 * jet_pt +
+                         2.58066e-05 * pow(jet_pt, 2) -
+                         2.02149e-08 * pow(jet_pt, 3));
+}
+
+
+
 // Btag
 //
 Btag::Btag():
@@ -253,7 +271,7 @@ Btag::Btag():
     _eff_ctag.reset(new CtagEfficiency());
 
     _scale_light.reset(new LightScale());
-    _eff_light.reset(new LightEfficiency());
+    _eff_light.reset(new LightEfficiencyData());
 }
 
 Btag::Btag(const Btag &object):
@@ -268,7 +286,7 @@ Btag::Btag(const Btag &object):
     _eff_ctag.reset(new CtagEfficiency());
 
     _scale_light.reset(new LightScale());
-    _eff_light.reset(new LightEfficiency());
+    _eff_light.reset(new LightEfficiencyData());
 }
 
 Btag::Info Btag::is_tagged(const CorrectedJet &jet)
@@ -305,9 +323,9 @@ Btag::Info Btag::is_tagged(const CorrectedJet &jet)
                     case 2: // d-quark
                     case 1: // u-quark
                     case 21: // gluon
-                        scale_ = scale(result, jet_pt,
-                                       _scale_light, _eff_light,
-                                       _mistag_systematic);
+                        scale_ = scale_data(result, jet_pt,
+                                            _scale_light, _eff_light,
+                                            _mistag_systematic);
                         break;
 
                     default:
@@ -379,6 +397,42 @@ float Btag::scale(const bool &is_tagged,
                    sf->value_minus(jet_pt) :
                    (1 - sf->value_minus(jet_pt) * eff->value_minus(jet_pt)) /
                        (1 - eff->value_minus(jet_pt));
+            break;
+
+        default:
+            throw runtime_error("unsupported systematic");
+
+            break;
+    }
+}
+
+float Btag::scale_data(const bool &is_tagged,
+                       const float &jet_pt,
+                       const BtagFunctionPtr &sf,
+                       const BtagFunctionPtr &eff,
+                       const Systematic &systematic)
+{
+    switch(systematic)
+    {
+        case NONE:
+            return is_tagged ?
+                   sf->value(jet_pt) :
+                   (1 - eff->value(jet_pt)) /
+                       (1 - eff->value(jet_pt) / sf->value(jet_pt));
+            break;
+
+        case UP:
+            return is_tagged ?
+                   sf->value_plus(jet_pt) :
+                   (1 - eff->value_plus(jet_pt)) /
+                       (1 - eff->value_plus(jet_pt) / sf->value_plus(jet_pt));
+            break;
+
+        case DOWN:
+            return is_tagged ?
+                   sf->value_minus(jet_pt) :
+                   (1 - eff->value_minus(jet_pt)) /
+                       (1 - eff->value_minus(jet_pt) / sf->value_minus(jet_pt));
             break;
 
         default:
