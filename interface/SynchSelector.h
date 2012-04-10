@@ -41,6 +41,14 @@ namespace bsm
                 ISOLATION
             };
 
+            enum Wflavor
+            {
+                WJETS = 0, // no split
+                WBX,
+                WCX, 
+                WLIGHT
+            };
+
             virtual ~SynchSelectorDelegate() {}
 
             virtual void setLeptonMode(const LeptonMode &) {}
@@ -54,6 +62,8 @@ namespace bsm
 
             virtual void setLtopPt(const float &) {}
             virtual void setChi2Discriminator(const float &) {}
+
+            virtual void setWflavor(const Wflavor &) {}
     };
 
     class SynchSelectorOptions:
@@ -76,10 +86,9 @@ namespace bsm
             void setMinBtag(const float &);
             void setElectronPt(const float &);
             void setQCDTemplate(const bool &);
-
             void setLtopPt(const float &);
-
             void setChi2Discriminator(const float &);
+            void setWflavor(std::string);
 
             DescriptionPtr _description;
     };
@@ -118,6 +127,7 @@ namespace bsm
                 VETO_SECOND_MUON,
                 CUT_LEPTON,
                 LEADING_JET,
+                WFLAVOR,
                 MAX_BTAG,
                 MIN_BTAG,
                 HTLEP,
@@ -138,6 +148,7 @@ namespace bsm
             // Access cuts
             //
             CutPtr cut() const;
+            CutPtr wflavor() const;
             CutPtr leadingJet() const;
             CutPtr maxBtag() const;
             CutPtr minBtag() const;
@@ -188,8 +199,9 @@ namespace bsm
             virtual void setQCDTemplate(const bool &);
 
             virtual void setLtopPt(const float &);
-
             virtual void setChi2Discriminator(const float &);
+
+            virtual void setWflavor(const Wflavor &);
 
             // Jet Energy Correction Delegate interface
             //
@@ -227,6 +239,8 @@ namespace bsm
             bool missingEnergy(const Event *);
             
         private:
+            bool splitWflavor(const Event *); // use event jets to split sample
+            bool splitWflavor(); // use good jes to split sample
             bool triggers(const Event *);
             bool primaryVertices(const Event *);
             bool jets(const Event *);
@@ -273,6 +287,7 @@ namespace bsm
             // cuts
             //
             CutPtr _cut;
+            CutPtr _wflavor;
             CutPtr _leading_jet;
             CutPtr _max_btag;
             CutPtr _min_btag;
