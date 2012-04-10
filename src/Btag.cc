@@ -146,25 +146,13 @@ float LightScale::value(const float &jet_pt) const
            5.50157e-09 * pow(jet_pt, 3);
 }
 
-float LightScale::error_plus(const float &jet_pt) const
-{
-    return value_max(jet_pt) - value(jet_pt);
-}
-
-float LightScale::error_minus(const float &jet_pt) const
-{
-    return value(jet_pt) - value_min(jet_pt);
-}
-
-// Private
-//
-float LightScale::value_max(const float &jet_pt) const
+float LightScale::value_plus(const float &jet_pt) const
 {
     if (20 > jet_pt)
-        return value_max(20);
+        return value_plus(20);
 
     if (670 < jet_pt)
-        return value_max(670);
+        return value_plus(670);
 
     return 0.997077 +
            0.00473953 * jet_pt -
@@ -172,13 +160,13 @@ float LightScale::value_max(const float &jet_pt) const
            1.0032e-08 * pow(jet_pt, 3);
 }
 
-float LightScale::value_min(const float &jet_pt) const
+float LightScale::value_minus(const float &jet_pt) const
 {
     if (20 > jet_pt)
-        return value_min(20);
+        return value_minus(20);
 
     if (670 < jet_pt)
-        return value_min(670);
+        return value_minus(670);
 
     return 0.899715 +
            0.00102278 * jet_pt -
@@ -305,11 +293,37 @@ Btag::Info Btag::is_tagged(const CorrectedJet &jet)
                 {
                     const float jet_pt = pt(*jet.corrected_p4);
 
-                    scale = result ?
-                            _scale_function->value(jet_pt) :
-                            (1 - _scale_function->value(jet_pt) *
-                                    _eff_function->value(jet_pt)) /
-                                (1 - _eff_function->value(jet_pt));
+                    switch(_systematic)
+                    {
+                        case NONE:
+                            scale = result ?
+                                    _scale_function->value(jet_pt) :
+                                    (1 - _scale_function->value(jet_pt) *
+                                            _eff_function->value(jet_pt)) /
+                                        (1 - _eff_function->value(jet_pt));
+                            break;
+
+                        case UP:
+                            scale = result ?
+                                    _scale_function->value_plus(jet_pt) :
+                                    (1 - _scale_function->value_plus(jet_pt) *
+                                            _eff_function->value_plus(jet_pt)) /
+                                        (1 - _eff_function->value_plus(jet_pt));
+                            break;
+
+                        case DOWN:
+                            scale = result ?
+                                    _scale_function->value_minus(jet_pt) :
+                                    (1 - _scale_function->value_minus(jet_pt) *
+                                            _eff_function->value_minus(jet_pt)) /
+                                        (1 - _eff_function->value_minus(jet_pt));
+                            break;
+
+                        default:
+                            throw runtime_error("unsupported systematic");
+
+                            break;
+                    }
                 }
             }
 

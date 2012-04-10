@@ -61,8 +61,8 @@ namespace bsm
             };
 
             virtual float value(const float &x) const = 0;
-            virtual float error_plus(const float &x) const = 0;
-            virtual float error_minus(const float &x) const = 0;
+            virtual float value_plus(const float &x) const = 0;
+            virtual float value_minus(const float &x) const = 0;
 
         protected:
             const uint32_t find_bin(const float &jet_pt) const;
@@ -78,14 +78,16 @@ namespace bsm
             BtagScale();
 
             virtual float value(const float &jet_pt) const;
-            virtual float error_plus(const float &jet_pt) const
+            virtual float value_plus(const float &jet_pt) const
             {
-                return error(jet_pt);
+                return value(jet_pt) + error(jet_pt);
             }
 
-            virtual float error_minus(const float &jet_pt) const
+            virtual float value_minus(const float &jet_pt) const
             {
-                return error(jet_pt);
+                const float value_ = value(jet_pt) - error(jet_pt);
+
+                return value_ > 0 ? value_ : 0;
             }
 
         protected:
@@ -105,8 +107,8 @@ namespace bsm
     {
         public:
             virtual float value(const float &jet_pt) const;
-            virtual float error_plus(const float &jet_pt) const;
-            virtual float error_minus(const float &jet_pt) const;
+            virtual float value_plus(const float &jet_pt) const;
+            virtual float value_minus(const float &jet_pt) const;
 
         private:
             float value_max(const float &jet_pt) const;
@@ -120,14 +122,14 @@ namespace bsm
             BtagEfficiency();
 
             virtual float value(const float &jet_pt) const;
-            virtual float error_plus(const float &jet_pt) const
+            virtual float value_plus(const float &jet_pt) const
             {
-                return 0;
+                return value(jet_pt);
             }
 
-            virtual float error_minus(const float &jet_pt) const
+            virtual float value_minus(const float &jet_pt) const
             {
-                return 0;
+                return value(jet_pt);
             }
 
         private:
