@@ -21,13 +21,27 @@ BtagOptions::BtagOptions()
     _description->add_options()
         ("btag-up",
          po::value<bool>()->implicit_value(true)->notifier(
-             boost::bind(&BtagOptions::setSystematic, this, BtagDelegate::UP)),
+             boost::bind(&BtagOptions::setBtagSystematic, this,
+                         BtagDelegate::UP)),
          "Change btag SF one sigma up")
 
         ("btag-down",
          po::value<bool>()->implicit_value(true)->notifier(
-             boost::bind(&BtagOptions::setSystematic, this, BtagDelegate::DOWN)),
+             boost::bind(&BtagOptions::setBtagSystematic, this,
+                         BtagDelegate::DOWN)),
          "Change btag SF one sigma down")
+
+        ("mistag-up",
+         po::value<bool>()->implicit_value(true)->notifier(
+             boost::bind(&BtagOptions::setMistagSystematic, this,
+                         BtagDelegate::UP)),
+         "Change mistag SF one sigma up")
+
+        ("mistag-down",
+         po::value<bool>()->implicit_value(true)->notifier(
+             boost::bind(&BtagOptions::setMistagSystematic, this,
+                         BtagDelegate::DOWN)),
+         "Change mistag SF one sigma down")
     ;
 }
 
@@ -40,12 +54,20 @@ BtagOptions::DescriptionPtr BtagOptions::description() const
 
 // Private
 //
-void BtagOptions::setSystematic(const BtagDelegate::Systematic &systematic)
+void BtagOptions::setBtagSystematic(const BtagDelegate::Systematic &systematic)
 {
     if (!delegate())
         return;
 
-    delegate()->setSystematic(systematic);
+    delegate()->setBtagSystematic(systematic);
+}
+
+void BtagOptions::setMistagSystematic(const BtagDelegate::Systematic &systematic)
+{
+    if (!delegate())
+        return;
+
+    delegate()->setMistagSystematic(systematic);
 }
 
 
@@ -220,7 +242,8 @@ float LightEfficiency::value(const float &jet_pt) const
 // Btag
 //
 Btag::Btag():
-    _systematic(NONE),
+    _btag_systematic(NONE),
+    _mistag_systematic(NONE),
     _discriminator(0.898)
 {
     _scale_btag.reset(new BtagScale());
@@ -234,7 +257,8 @@ Btag::Btag():
 }
 
 Btag::Btag(const Btag &object):
-    _systematic(object._systematic),
+    _btag_systematic(object._btag_systematic),
+    _mistag_systematic(object._mistag_systematic),
     _discriminator(object._discriminator)
 {
     _scale_btag.reset(new BtagScale());
@@ -258,76 +282,40 @@ Btag::Info Btag::is_tagged(const CorrectedJet &jet)
         if (Jet::BTag::CSV == btag->type())
         {
             bool result = _discriminator < btag->discriminator();
-            float scale = 1;
+            float scale_ = 1;
 
             if (jet.jet->has_gen_parton())
             {
-                BtagFunctionPtr _scale_function;
-                BtagFunctionPtr _eff_function;
-
+                const float jet_pt = pt(*jet.corrected_p4);
                 switch(abs(jet.jet->gen_parton().id()))
                 {
                     case 5: // b-quark
-                        _scale_function = _scale_btag;
-                        _eff_function = _eff_btag;
+                        scale_ = scale(result, jet_pt,
+                                       _scale_btag, _eff_btag,
+                                       _btag_systematic);
                         break;
 
                     case 4: // c-quark
-                        _scale_function = _scale_ctag;
-                        _eff_function = _eff_ctag;
+                        scale_ = scale(result, jet_pt,
+                                       _scale_ctag, _eff_ctag,
+                                       _btag_systematic);
                         break;
 
                     case 3: // s-quark
                     case 2: // d-quark
                     case 1: // u-quark
                     case 21: // gluon
-                        _scale_function = _scale_light;
-                        _eff_function = _eff_light;
+                        scale_ = scale(result, jet_pt,
+                                       _scale_light, _eff_light,
+                                       _mistag_systematic);
                         break;
 
                     default:
                         break;
                 }
-
-                if (_scale_function && _eff_function)
-                {
-                    const float jet_pt = pt(*jet.corrected_p4);
-
-                    switch(_systematic)
-                    {
-                        case NONE:
-                            scale = result ?
-                                    _scale_function->value(jet_pt) :
-                                    (1 - _scale_function->value(jet_pt) *
-                                            _eff_function->value(jet_pt)) /
-                                        (1 - _eff_function->value(jet_pt));
-                            break;
-
-                        case UP:
-                            scale = result ?
-                                    _scale_function->value_plus(jet_pt) :
-                                    (1 - _scale_function->value_plus(jet_pt) *
-                                            _eff_function->value_plus(jet_pt)) /
-                                        (1 - _eff_function->value_plus(jet_pt));
-                            break;
-
-                        case DOWN:
-                            scale = result ?
-                                    _scale_function->value_minus(jet_pt) :
-                                    (1 - _scale_function->value_minus(jet_pt) *
-                                            _eff_function->value_minus(jet_pt)) /
-                                        (1 - _eff_function->value_minus(jet_pt));
-                            break;
-
-                        default:
-                            throw runtime_error("unsupported systematic");
-
-                            break;
-                    }
-                }
             }
 
-            return make_pair(result, scale);
+            return make_pair(result, scale_);
         }
     }
 
@@ -336,9 +324,14 @@ Btag::Info Btag::is_tagged(const CorrectedJet &jet)
 
 // BtagDelegate interface
 //
-void Btag::setSystematic(const Systematic &systematic)
+void Btag::setBtagSystematic(const Systematic &systematic)
 {
-    _systematic = systematic;
+    _btag_systematic = systematic;
+}
+
+void Btag::setMistagSystematic(const Systematic &systematic)
+{
+    _mistag_systematic = systematic;
 }
 
 // Object interface
@@ -355,4 +348,42 @@ Btag::ObjectPtr Btag::clone() const
 
 void Btag::print(std::ostream &out) const
 {
+}
+
+// Private
+//
+float Btag::scale(const bool &is_tagged,
+                  const float &jet_pt,
+                  const BtagFunctionPtr &sf,
+                  const BtagFunctionPtr &eff,
+                  const Systematic &systematic)
+{
+    switch(systematic)
+    {
+        case NONE:
+            return is_tagged ?
+                   sf->value(jet_pt) :
+                   (1 - sf->value(jet_pt) * eff->value(jet_pt)) /
+                       (1 - eff->value(jet_pt));
+            break;
+
+        case UP:
+            return is_tagged ?
+                   sf->value_plus(jet_pt) :
+                   (1 - sf->value_plus(jet_pt) * eff->value_plus(jet_pt)) /
+                       (1 - eff->value_plus(jet_pt));
+            break;
+
+        case DOWN:
+            return is_tagged ?
+                   sf->value_minus(jet_pt) :
+                   (1 - sf->value_minus(jet_pt) * eff->value_minus(jet_pt)) /
+                       (1 - eff->value_minus(jet_pt));
+            break;
+
+        default:
+            throw runtime_error("unsupported systematic");
+
+            break;
+    }
 }

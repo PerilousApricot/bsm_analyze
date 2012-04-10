@@ -20,16 +20,20 @@ namespace bsm
         public:
             enum Systematic
             {
-                DOWN = -1,
                 NONE = 0,
-                UP = 1
+                DOWN,
+                UP
             };
 
             virtual ~BtagDelegate()
             {
             }
 
-            virtual void setSystematic(const Systematic &)
+            virtual void setBtagSystematic(const Systematic &)
+            {
+            }
+
+            virtual void setMistagSystematic(const Systematic &)
             {
             }
     };
@@ -46,7 +50,8 @@ namespace bsm
             virtual DescriptionPtr description() const;
 
         private:
-            void setSystematic(const BtagDelegate::Systematic &);
+            void setBtagSystematic(const BtagDelegate::Systematic &);
+            void setMistagSystematic(const BtagDelegate::Systematic &);
 
             DescriptionPtr _description;
     };
@@ -165,7 +170,8 @@ namespace bsm
 
             // BtagDelegate interface
             //
-            virtual void setSystematic(const Systematic &);
+            virtual void setBtagSystematic(const Systematic &);
+            virtual void setMistagSystematic(const Systematic &);
 
             // Object interface
             //
@@ -174,15 +180,23 @@ namespace bsm
             virtual void print(std::ostream &) const;
 
         private:
+            typedef boost::shared_ptr<BtagFunction> BtagFunctionPtr;
+
             // Prevent copying
             //
             Btag &operator =(const Btag &);
 
-            Systematic _systematic;
+            float scale(const bool &is_tagged,
+                        const float &jet_pt,
+                        const BtagFunctionPtr &sf,
+                        const BtagFunctionPtr &eff,
+                        const Systematic &sytematic);
+
+
+            Systematic _btag_systematic;
+            Systematic _mistag_systematic;
 
             const float _discriminator;
-
-            typedef boost::shared_ptr<BtagFunction> BtagFunctionPtr;
 
             BtagFunctionPtr _scale_btag;
             BtagFunctionPtr _eff_btag;
