@@ -7,6 +7,50 @@ from __future__ import division,print_function
 
 import ROOT
 
+def calculate_efficiency(hist):
+    '''
+    bins = hist.GetXaxis().GetNbins()
+
+    integral_error = ROOT.Double()
+    integral = hist.IntegralAndError(1, bins, integral_error)
+
+    if integral:
+        numerator = hist.Clone()
+        numerator.Reset()
+
+        denominator = hist.Clone()
+        denominator.Reset()
+
+        for bin_ in range(1, bins + 1):
+            error = ROOT.Double()
+
+            numerator.SetBinContent(bin_,
+                                    hist.IntegralAndError(1, bin_, error))
+            numerator.SetBinError(bin_, error)
+
+            denominator.SetBinContent(bin_, integral)
+            denominator.SetBinError(bin_, integral_error)
+
+        hist = ROOT.TGraphAsymmErrors()
+        hist.Divide(numerator, denominator, "cl=0.683 b(1,1) mode e0")
+    else:
+        hist = ROOT.TGraphAsymmErrors(hist)
+    '''
+
+    hist.Scale(1 / hist.Integral())
+
+    clone = hist.Clone()
+    bins = hist.GetXaxis().GetNbins()
+    for bin_ in range(1, bins + 1):
+        error = ROOT.Double()
+
+        hist.SetBinContent(bin_, clone.IntegralAndError(1, bin_, error))
+        hist.SetBinError(bin_, error)
+
+    hist.GetYaxis().SetTitle("Integral(0, x)")
+
+    return hist
+
 def efficiency(wrapped):
     '''
     Convert 1D histogram into efficiency plot:
@@ -21,35 +65,7 @@ def efficiency(wrapped):
     def integrate(*parg, **karg):
         ''' wrapper around function that is expected to return 1D hist '''
 
-        h = wrapped(*parg, **karg)
-        bins = h.GetXaxis().GetNbins()
-
-        integral_error = ROOT.Double()
-        integral = h.IntegralAndError(1, bins, integral_error)
-
-        if integral:
-            numerator = h.Clone()
-            numerator.Reset()
-
-            denominator = h.Clone()
-            denominator.Reset()
-
-            for bin_ in range(1, bins + 1):
-                error = ROOT.Double()
-
-                numerator.SetBinContent(bin_,
-                                        h.IntegralAndError(1, bin_, error))
-                numerator.SetBinError(bin_, error)
-
-                denominator.SetBinContent(bin_, integral)
-                denominator.SetBinError(bin_, integral_error)
-
-            h = ROOT.TGraphAsymmErrors()
-            h.Divide(numerator, denominator, "cl=0.683 b(1,1) mode e0")
-        else:
-            h = ROOT.TGraphAsymmErrors(h)
-
-        return h
+        return calculate_efficiency(wrapped(*parg, **karg))
 
     return integrate
 
