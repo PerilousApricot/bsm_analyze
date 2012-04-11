@@ -115,6 +115,9 @@ class InputType(BaseType):
         "zjets": InputData(3048 * 1.0, 36277961),
 
         # Use NLO x-section: 31314 instead of LO: 27770
+        "wbx": InputData(31314 * 1.0, 77105816),
+        "wcx": InputData(31314 * 1.0, 77105816),
+        "wlight": InputData(31314 * 1.0, 77105816),
         "wjets": InputData(31314 * 1.0, 77105816),
 
         "wjets_scaling_plus": InputData(31314 * 1.0, 9784907),

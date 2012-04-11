@@ -20,6 +20,10 @@ class ChannelType(BaseType):
     channel_types = {
             "ttbar": ["ttbar"],
             "zjets": ["zjets"],
+
+            "wbx": ["wbx"],
+            "wcx": ["wcx"],
+            "wlight": ["wlight"],
             "wjets": ["wjets"],
 
             "stop": [x for x in InputType.input_types.keys()

@@ -20,6 +20,9 @@ class ChannelStyle(BaseStyle):
     channel_styles = {
             "ttbar": Style(ROOT.kRed + 1),
             "zjets": Style(ROOT.kBlue + 1),
+            "wbx": Style(ROOT.kGreen + 3),
+            "wcx": Style(ROOT.kGreen + 2),
+            "wlight": Style(ROOT.kGreen + 1),
             "wjets": Style(ROOT.kGreen + 1),
             "stop": Style(ROOT.kMagenta + 1),
 
