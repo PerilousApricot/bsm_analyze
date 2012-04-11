@@ -18,6 +18,7 @@
 #include "bsm_input/interface/Physics.pb.h"
 #include "interface/Btag.h"
 #include "interface/Cut.h"
+#include "interface/JetEnergyResolution.h"
 #include "interface/SynchSelector.h"
 #include "interface/Cut2DSelector.h"
 #include "interface/Utility.h"
@@ -280,6 +281,11 @@ SynchSelector::SynchSelector():
     _jec.reset(new DeltaRJetEnergyCorrections());
     monitor(_jec);
 
+    // Jet Energy Resoltuion
+    //
+    _jer.reset(new JetEnergyResolution());
+    monitor(_jer);
+
     // Cuts
     //
     _cut.reset(new Comparator<logical_and<bool> >(true));
@@ -374,6 +380,11 @@ SynchSelector::SynchSelector(const SynchSelector &object):
     //
     _jec = dynamic_pointer_cast<JetEnergyCorrections>(object._jec->clone());
     monitor(_jec);
+
+    // Jet Energy Resolution
+    //
+    _jer = dynamic_pointer_cast<JetEnergyResolution>(object._jer->clone());
+    monitor(_jer);
 
     // cuts
     //
@@ -613,6 +624,11 @@ bsm::Cut2DSelectorDelegate *SynchSelector::getCut2DSelectorDelegate() const
 bsm::BtagDelegate *SynchSelector::getBtagDelegate() const
 {
     return _btag.get();
+}
+
+bsm::JetEnergyResolutionDelegate *SynchSelector::getJERDelegate() const
+{
+    return _jer.get();
 }
 
 // Synch Selector Delegate interface
@@ -982,6 +998,8 @@ bool SynchSelector::jets(const Event *event)
         //
         if (!correction.corrected_p4)
             continue;
+
+        _jer->correct(correction);
 
         met = correction.corrected_met.get();
         _good_met = correction.corrected_met;

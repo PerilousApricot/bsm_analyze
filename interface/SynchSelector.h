@@ -180,6 +180,7 @@ namespace bsm
 
             Cut2DSelectorDelegate *getCut2DSelectorDelegate() const;
             BtagDelegate *getBtagDelegate() const;
+            JetEnergyResolutionDelegate *getJERDelegate() const;
 
             bool reconstruction(const bool &value); // apply reconstruction cut
             bool ltop(const float &value); // apply ltop cut
@@ -209,7 +210,7 @@ namespace bsm
                     const std::string &file_name); // proxy to JEC setCorrection
 
             virtual void setSystematic(const Systematic &,
-                    const std::string &filename);
+                                       const std::string &filename);
 
             virtual void setChildCorrection();
 
@@ -275,6 +276,7 @@ namespace bsm
             boost::shared_ptr<Cut2DSelector> _cut2d_selector;
 
             boost::shared_ptr<JetEnergyCorrections> _jec;
+            boost::shared_ptr<JetEnergyResolution> _jer;
 
             GoodPrimaryVertices _good_primary_vertices;
             GoodElectrons _good_electrons;

@@ -278,6 +278,7 @@ namespace bsm
             const P4MonitorPtr ltopJet1() const;
 
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
+            JetEnergyResolutionDelegate *getJERDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
             Cut2DSelectorDelegate *getCut2DSelectorDelegate() const;
             PileupDelegate *getPileupDelegate() const;

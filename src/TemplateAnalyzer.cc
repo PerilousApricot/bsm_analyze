@@ -1205,6 +1205,11 @@ bsm::JetEnergyCorrectionDelegate
     return _synch_selector.get();
 }
 
+bsm::JetEnergyResolutionDelegate *TemplateAnalyzer::getJERDelegate() const
+{
+    return _synch_selector->getJERDelegate();
+}
+
 bsm::SynchSelectorDelegate *TemplateAnalyzer::getSynchSelectorDelegate() const
 {
     return _synch_selector.get();
