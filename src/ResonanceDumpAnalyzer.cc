@@ -130,6 +130,20 @@ void ResonanceDumpAnalyzer::setFormatLevel(const Level &level)
         _format.reset(new ShortFormat());
 }
 
+void ResonanceDumpAnalyzer::setChi2Reconstruction(const Chi2Discriminators &ltop,
+                                                  const Chi2Discriminators &htop)
+{
+    stopMonitor(_reconstructor);
+
+    Chi2ResonanceReconstructor *reco = new Chi2ResonanceReconstructor();
+    reco->setLtopDiscriminators(ltop);
+    reco->setHtopDiscriminators(htop);
+
+    _reconstructor.reset(reco);
+
+    monitor(_reconstructor);
+}
+
 void ResonanceDumpAnalyzer::process(const Event *event)
 {
     if (_dumped_events > _max_events)
@@ -144,9 +158,15 @@ void ResonanceDumpAnalyzer::process(const Event *event)
     {
         Mttbar resonance = mttbar();
 
-        if (_synch_selector->reconstruction(resonance.valid)
-               && _synch_selector->ltop(pt(resonance.ltop)))
+        if (_synch_selector->reconstruction(resonance.valid) &&
+            _synch_selector->ltop(pt(resonance.ltop)) &&
+            _synch_selector->chi2(resonance.ltop_discriminator +
+                                  resonance.htop_discriminator))
         {
+            _log << "r: " << event->extra().run()
+                << " l: " << event->extra().lumi()
+                << " e: " << event->extra().id() << endl;
+
             if ((_htop_njets.min
                  && resonance.htop_jets.size() < _htop_njets.min)
                     || (_htop_njets.max
@@ -304,13 +324,6 @@ void ResonanceDumpAnalyzer::print(std::ostream &out) const
 //
 ResonanceDumpAnalyzer::Mttbar ResonanceDumpAnalyzer::mttbar() const
 {
-    // Note: leptons are kept in a vector of pointers
-    //
-    const LorentzVector &lepton_p4 =
-        SynchSelector::ELECTRON == _synch_selector->leptonMode()
-        ? (*_synch_selector->goodElectrons().begin())->physics_object().p4()
-        : (*_synch_selector->goodMuons().begin())->physics_object().p4();
-
     if (10 < _synch_selector->goodJets().size())
     {
         clog << _synch_selector->goodJets().size()
@@ -318,6 +331,13 @@ ResonanceDumpAnalyzer::Mttbar ResonanceDumpAnalyzer::mttbar() const
 
         return Mttbar();
     }
+
+    // Note: leptons are kept in a vector of pointers
+    //
+    const LorentzVector &lepton_p4 =
+        SynchSelector::ELECTRON == _synch_selector->leptonMode()
+        ? (*_synch_selector->goodElectrons().begin())->physics_object().p4()
+        : (*_synch_selector->goodMuons().begin())->physics_object().p4();
 
     return _reconstructor->run(lepton_p4,
                                *_synch_selector->goodMET(),

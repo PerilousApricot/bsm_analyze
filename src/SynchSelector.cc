@@ -18,6 +18,7 @@
 #include "bsm_input/interface/Physics.pb.h"
 #include "interface/Btag.h"
 #include "interface/Cut.h"
+#include "interface/JetEnergyResolution.h"
 #include "interface/SynchSelector.h"
 #include "interface/Cut2DSelector.h"
 #include "interface/Utility.h"
@@ -81,6 +82,11 @@ SynchSelectorOptions::SynchSelectorOptions()
          po::value<float>()->notifier(
              boost::bind(&SynchSelectorOptions::setChi2Discriminator, this, _1)),
          "set max chi2 disriminator")
+
+        ("wflavor",
+         po::value<string>()->notifier(
+             boost::bind(&SynchSelectorOptions::setWflavor, this, _1)),
+         "select W+flavor events: wbx, wcx, wlight")
     ;
 }
 
@@ -206,6 +212,25 @@ void SynchSelectorOptions::setChi2Discriminator(const float &value)
     delegate()->setChi2Discriminator(value);
 }
 
+void SynchSelectorOptions::setWflavor(std::string mode)
+{
+    if (!delegate())
+        return;
+
+    to_lower(mode);
+
+    if ("wjets" == mode)
+        delegate()->setWflavor(SynchSelectorDelegate::WJETS);
+    else if ("wbx" == mode)
+        delegate()->setWflavor(SynchSelectorDelegate::WBX);
+    else if ("wcx" == mode)
+        delegate()->setWflavor(SynchSelectorDelegate::WCX);
+    else if ("wlight" == mode)
+        delegate()->setWflavor(SynchSelectorDelegate::WLIGHT);
+    else
+        cerr << "unsupported synchronization selector W+flavor mode" << endl;
+}
+
 
 
 // Synchronization Exercise Selector
@@ -256,10 +281,20 @@ SynchSelector::SynchSelector():
     _jec.reset(new DeltaRJetEnergyCorrections());
     monitor(_jec);
 
+    // Jet Energy Resoltuion
+    //
+    _jer.reset(new JetEnergyResolution());
+    monitor(_jer);
+
     // Cuts
     //
     _cut.reset(new Comparator<logical_and<bool> >(true));
     monitor(_cut);
+
+    _wflavor.reset(new Comparator<equal_to<uint32_t> >(
+                static_cast<uint32_t>(WJETS)));
+    _wflavor->disable();
+    monitor(_wflavor);
 
     _leading_jet.reset(new Comparator<>(150));
     monitor(_leading_jet);
@@ -346,10 +381,18 @@ SynchSelector::SynchSelector(const SynchSelector &object):
     _jec = dynamic_pointer_cast<JetEnergyCorrections>(object._jec->clone());
     monitor(_jec);
 
+    // Jet Energy Resolution
+    //
+    _jer = dynamic_pointer_cast<JetEnergyResolution>(object._jer->clone());
+    monitor(_jer);
+
     // cuts
     //
     _cut = dynamic_pointer_cast<Cut>(object.cut()->clone());
     monitor(_cut);
+
+    _wflavor = dynamic_pointer_cast<Cut>(object.wflavor()->clone());
+    monitor(_wflavor);
 
     _leading_jet = dynamic_pointer_cast<Cut>(object.leadingJet()->clone());
     monitor(_leading_jet);
@@ -390,6 +433,11 @@ SynchSelector::~SynchSelector()
 SynchSelector::CutPtr SynchSelector::cut() const
 {
     return _cut;
+}
+
+SynchSelector::CutPtr SynchSelector::wflavor() const
+{
+    return _wflavor;
 }
 
 SynchSelector::CutPtr SynchSelector::leadingJet() const
@@ -437,23 +485,27 @@ SynchSelector::CutPtr SynchSelector::chi2() const
     return _chi2;
 }
 
-uint32_t SynchSelector::countBtaggedJets()
+SynchSelector::Btags SynchSelector::countBtaggedJets()
 {
-    if (!_btagged_jets.is_valid())
+    if (!_btags.is_valid())
     {
         uint32_t btags = 0;
+        float scale = 1;
         for(GoodJets::const_iterator jet = _good_jets.begin();
                 _good_jets.end() != jet;
                 ++jet)
         {
-            if (_btag->is_tagged(*jet))
+            Btag::Info info = _btag->is_tagged(*jet);
+            if (info.first)
                 ++btags;
+
+            scale *= info.second;
         }
 
-        _btagged_jets.set(btags);
+        _btags.set(make_pair(btags, scale));
     }
 
-    return _btagged_jets.get();
+    return _btags.get();
 }
 
 bool SynchSelector::apply(const Event *event)
@@ -474,6 +526,7 @@ bool SynchSelector::apply(const Event *event)
     if (qcdTemplate())
     {
         tricut()->invert();
+
         return triggers(event)
             && primaryVertices(event)
             && jets(event)
@@ -482,6 +535,7 @@ bool SynchSelector::apply(const Event *event)
             && secondMuonVeto()
             && isolationAnd2DCut()
             && leadingJetCut()
+            && splitWflavor()
             && maxBtags()
             && minBtags()
             && htlepCut(event)
@@ -498,6 +552,7 @@ bool SynchSelector::apply(const Event *event)
         && secondMuonVeto()
         && isolationAnd2DCut()
         && leadingJetCut()
+        && splitWflavor()
         && maxBtags()
         && minBtags()
         && htlepCut(event)
@@ -571,6 +626,11 @@ bsm::BtagDelegate *SynchSelector::getBtagDelegate() const
     return _btag.get();
 }
 
+bsm::JetEnergyResolutionDelegate *SynchSelector::getJERDelegate() const
+{
+    return _jer.get();
+}
+
 // Synch Selector Delegate interface
 //
 void SynchSelector::setLeptonMode(const LeptonMode &lepton_mode)
@@ -624,6 +684,12 @@ void SynchSelector::setChi2Discriminator(const float &value)
 {
     chi2()->setValue(value);
     chi2()->enable();
+}
+
+void SynchSelector::setWflavor(const Wflavor &flavor)
+{
+    wflavor()->setValue(static_cast<uint32_t>(flavor));
+    wflavor()->enable();
 }
 
 // Jet Energy Correction Delegate interface
@@ -688,6 +754,31 @@ SynchSelector::ObjectPtr SynchSelector::clone() const
 void SynchSelector::print(std::ostream &out) const
 {
     _cutflow->cut(PRESELECTION)->setName("Pre-Selection");
+
+    string wflavor_;
+    switch(Wflavor(wflavor()->value()))
+    {
+        case WJETS:
+            wflavor_ = "W+jet";
+            break;
+
+        case WBX:
+            wflavor_ = "W+bX";
+            break;
+
+        case WCX:
+            wflavor_ = "W+cX";
+            break;
+
+        case WLIGHT:
+            wflavor_ = "W+light";
+            break;
+
+        default:
+            wflavor_ = "unsupported";
+            break;
+    }
+    _cutflow->cut(WFLAVOR)->setName(wflavor_);
     _cutflow->cut(TRIGGER)->setName("Trigger");
     _cutflow->cut(SCRAPING)->setName("Scraping Veto");
     _cutflow->cut(HBHENOISE)->setName("HBHE Noise");
@@ -755,6 +846,90 @@ bool SynchSelector::chi2(const float &value)
 
 // Private
 //
+bool SynchSelector::splitWflavor(const Event *event)
+{
+    if (wflavor()->isDisabled())
+        return true;
+
+    if (WJETS == wflavor()->value())
+        return wflavor()->apply(static_cast<uint32_t>(WJETS)) &&
+               (_cutflow->apply(WFLAVOR), true);
+
+    // It is assumed that Wjets sample has W->l+nu (leptonic decay) and
+    // all jets are additional generated objects
+    //
+    //  Wbx     if at least one b-quark is found among jets
+    //  Wcx     if there is no b-quark and at least one c-quark is found
+    //  Wlight  otherwise
+    //
+    typedef ::google::protobuf::RepeatedPtrField<Jet> Jets;
+
+    bool wcx = false;
+    for(Jets::const_iterator jet = event->jet().begin();
+            event->jet().end() != jet;
+            ++jet)
+    {
+        if (!jet->has_gen_parton())
+            continue;
+
+        switch(abs(jet->gen_parton().id()))
+        {
+            case 5: // Wbx
+                return wflavor()->apply(static_cast<uint32_t>(WBX)) &&
+                       (_cutflow->apply(WFLAVOR), true);
+
+            case 4:
+                wcx = true;
+                break;
+        }
+    }
+
+    return wflavor()->apply(static_cast<uint32_t>(wcx ? WCX : WLIGHT)) &&
+           (_cutflow->apply(WFLAVOR), true);
+}
+
+bool SynchSelector::splitWflavor()
+{
+    if (wflavor()->isDisabled())
+        return true;
+
+    if (WJETS == wflavor()->value())
+        return wflavor()->apply(static_cast<uint32_t>(WJETS)) &&
+               (_cutflow->apply(WFLAVOR), true);
+
+    // It is assumed that Wjets sample has W->l+nu (leptonic decay) and
+    // all jets are additional generated objects
+    //
+    //  Wbx     if at least one b-quark is found among jets
+    //  Wcx     if there is no b-quark and at least one c-quark is found
+    //  Wlight  otherwise
+    //
+    typedef ::google::protobuf::RepeatedPtrField<Jet> Jets;
+
+    bool wcx = false;
+    for(GoodJets::const_iterator jet = goodJets().begin();
+            goodJets().end() != jet;
+            ++jet)
+    {
+        if (!jet->jet->has_gen_parton())
+            continue;
+
+        switch(abs(jet->jet->gen_parton().id()))
+        {
+            case 5: // Wbx
+                return wflavor()->apply(static_cast<uint32_t>(WBX)) &&
+                       (_cutflow->apply(WFLAVOR), true);
+
+            case 4:
+                wcx = true;
+                break;
+        }
+    }
+
+    return wflavor()->apply(static_cast<uint32_t>(wcx ? WCX : WLIGHT)) &&
+           (_cutflow->apply(WFLAVOR), true);
+}
+
 bool SynchSelector::triggers(const Event *event)
 {
     bool result = _triggers.empty();
@@ -823,6 +998,8 @@ bool SynchSelector::jets(const Event *event)
         //
         if (!correction.corrected_p4)
             continue;
+
+        _jer->correct(correction);
 
         met = correction.corrected_met.get();
         _good_met = correction.corrected_met;
@@ -947,7 +1124,7 @@ bool SynchSelector::maxBtags()
     if (maxBtag()->isDisabled())
         return true;
 
-    return maxBtag()->apply(countBtaggedJets())
+    return maxBtag()->apply(countBtaggedJets().first)
         && (_cutflow->apply(MAX_BTAG), true);
 }
 
@@ -956,7 +1133,7 @@ bool SynchSelector::minBtags()
     if (minBtag()->isDisabled())
         return true;
 
-    return minBtag()->apply(countBtaggedJets())
+    return minBtag()->apply(countBtaggedJets().first)
         && (_cutflow->apply(MIN_BTAG), true);
 }
 
@@ -1051,7 +1228,7 @@ bool SynchSelector::isolation(const LorentzVector *p4, const PFIsolation *isolat
 
 void SynchSelector::invalidate_cache()
 {
-    _btagged_jets.invalidate();
+    _btags.invalidate();
 }
 
 void SynchSelector::selectGoodPrimaryVertices(const Event *event)

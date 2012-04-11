@@ -17,6 +17,8 @@ namespace bsm
             Cache();
 
             bool is_valid() const;
+            bool is_invalid() const;
+
             void invalidate();
 
             void set(const T &);
@@ -25,6 +27,7 @@ namespace bsm
             // runtime_error is thrown
             //
             const T &get() const;
+            operator T() const;
 
         private:
             T _value;
@@ -39,9 +42,15 @@ bsm::Cache<T>::Cache():
 }
 
 template<typename T>
-bool bsm::Cache<T>::is_valid() const
+inline bool bsm::Cache<T>::is_valid() const
 {
     return _is_valid;
+}
+
+template<typename T>
+inline bool bsm::Cache<T>::is_invalid() const
+{
+    return !is_valid();
 }
 
 template<typename T>
@@ -64,6 +73,12 @@ const T &bsm::Cache<T>::get() const
         return _value;
 
     throw std::runtime_error("invalid cache");
+}
+
+template<typename T>
+bsm::Cache<T>::operator T() const
+{
+    return get();
 }
 
 #endif

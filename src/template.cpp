@@ -21,6 +21,7 @@
 #include "interface/Btag.h"
 #include "interface/Cut2DSelector.h"
 #include "interface/JetEnergyCorrections.h"
+#include "interface/JetEnergyResolution.h"
 #include "interface/MonitorCanvas.h"
 #include "interface/Pileup.h"
 #include "interface/TemplateAnalyzer.h"
@@ -42,6 +43,7 @@ int main(int argc, char *argv[])
         boost::shared_ptr<AppController> app(new AppController());
 
         boost::shared_ptr<JetEnergyCorrectionOptions> jec_options(new JetEnergyCorrectionOptions());
+        boost::shared_ptr<JetEnergyResolutionOptions> jer_options(new JetEnergyResolutionOptions());
         boost::shared_ptr<SynchSelectorOptions> synch_selector_options(new SynchSelectorOptions());
         boost::shared_ptr<Cut2DSelectorOptions> cut_2d_selector_options(new Cut2DSelectorOptions());
         boost::shared_ptr<TriggerOptions> trigger_options(new TriggerOptions());
@@ -50,6 +52,7 @@ int main(int argc, char *argv[])
         boost::shared_ptr<BtagOptions> btag_options(new BtagOptions());
 
         jec_options->setDelegate(analyzer->getJetEnergyCorrectionDelegate());
+        jer_options->setDelegate(analyzer->getJERDelegate());
         synch_selector_options->setDelegate(analyzer->getSynchSelectorDelegate());
         cut_2d_selector_options->setDelegate(analyzer->getCut2DSelectorDelegate());
         trigger_options->setDelegate(analyzer->getTriggerDelegate());
@@ -58,6 +61,7 @@ int main(int argc, char *argv[])
         btag_options->setDelegate(analyzer->getBtagDelegate());
 
         app->addOptions(*jec_options);
+        app->addOptions(*jer_options);
         app->addOptions(*synch_selector_options);
         app->addOptions(*cut_2d_selector_options);
         app->addOptions(*trigger_options);

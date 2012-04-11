@@ -41,6 +41,14 @@ namespace bsm
                 ISOLATION
             };
 
+            enum Wflavor
+            {
+                WJETS = 0, // no split
+                WBX,
+                WCX, 
+                WLIGHT
+            };
+
             virtual ~SynchSelectorDelegate() {}
 
             virtual void setLeptonMode(const LeptonMode &) {}
@@ -54,6 +62,8 @@ namespace bsm
 
             virtual void setLtopPt(const float &) {}
             virtual void setChi2Discriminator(const float &) {}
+
+            virtual void setWflavor(const Wflavor &) {}
     };
 
     class SynchSelectorOptions:
@@ -76,10 +86,9 @@ namespace bsm
             void setMinBtag(const float &);
             void setElectronPt(const float &);
             void setQCDTemplate(const bool &);
-
             void setLtopPt(const float &);
-
             void setChi2Discriminator(const float &);
+            void setWflavor(std::string);
 
             DescriptionPtr _description;
     };
@@ -101,6 +110,10 @@ namespace bsm
             typedef std::vector<CorrectedJet> GoodJets;
             typedef LorentzVectorPtr GoodMET;
 
+            // first    Number of b-tagged jets
+            // second   event weight
+            typedef std::pair<uint32_t, float> Btags;
+
             enum Selection
             {
                 PRESELECTION = 0,
@@ -114,6 +127,7 @@ namespace bsm
                 VETO_SECOND_MUON,
                 CUT_LEPTON,
                 LEADING_JET,
+                WFLAVOR,
                 MAX_BTAG,
                 MIN_BTAG,
                 HTLEP,
@@ -134,6 +148,7 @@ namespace bsm
             // Access cuts
             //
             CutPtr cut() const;
+            CutPtr wflavor() const;
             CutPtr leadingJet() const;
             CutPtr maxBtag() const;
             CutPtr minBtag() const;
@@ -165,12 +180,13 @@ namespace bsm
 
             Cut2DSelectorDelegate *getCut2DSelectorDelegate() const;
             BtagDelegate *getBtagDelegate() const;
+            JetEnergyResolutionDelegate *getJERDelegate() const;
 
             bool reconstruction(const bool &value); // apply reconstruction cut
             bool ltop(const float &value); // apply ltop cut
             bool chi2(const float &value);
 
-            uint32_t countBtaggedJets();
+            Btags countBtaggedJets();
 
             // SynchSelectorDelegate interface
             //
@@ -184,8 +200,9 @@ namespace bsm
             virtual void setQCDTemplate(const bool &);
 
             virtual void setLtopPt(const float &);
-
             virtual void setChi2Discriminator(const float &);
+
+            virtual void setWflavor(const Wflavor &);
 
             // Jet Energy Correction Delegate interface
             //
@@ -193,7 +210,7 @@ namespace bsm
                     const std::string &file_name); // proxy to JEC setCorrection
 
             virtual void setSystematic(const Systematic &,
-                    const std::string &filename);
+                                       const std::string &filename);
 
             virtual void setChildCorrection();
 
@@ -223,6 +240,8 @@ namespace bsm
             bool missingEnergy(const Event *);
             
         private:
+            bool splitWflavor(const Event *); // use event jets to split sample
+            bool splitWflavor(); // use good jes to split sample
             bool triggers(const Event *);
             bool primaryVertices(const Event *);
             bool jets(const Event *);
@@ -257,6 +276,7 @@ namespace bsm
             boost::shared_ptr<Cut2DSelector> _cut2d_selector;
 
             boost::shared_ptr<JetEnergyCorrections> _jec;
+            boost::shared_ptr<JetEnergyResolution> _jer;
 
             GoodPrimaryVertices _good_primary_vertices;
             GoodElectrons _good_electrons;
@@ -269,6 +289,7 @@ namespace bsm
             // cuts
             //
             CutPtr _cut;
+            CutPtr _wflavor;
             CutPtr _leading_jet;
             CutPtr _max_btag;
             CutPtr _min_btag;
@@ -288,7 +309,7 @@ namespace bsm
 
             // cache
             //
-            Cache<uint32_t> _btagged_jets;
+            Cache<Btags> _btags;
     };
 
     // Helpers
