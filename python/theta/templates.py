@@ -19,7 +19,9 @@ class Templates(template.templates.Templates):
 
             "ttbar": "ttbar",
             "zjets": "zjets",
-            "wjets": "wjets",
+            "wb": "wb",
+            "wc": "wc",
+            "wlight": "wlight",
             "stop": "singletop",
             "qcd": "eleqcd",
             "data": "DATA",
@@ -33,14 +35,8 @@ class Templates(template.templates.Templates):
             "ttbar_matching_plus": "ttbar",
             "ttbar_matching_minus": "ttbar",
 
-            "ttbar_scaling_plus": "ttbar",
-            "ttbar_scaling_minus": "ttbar",
-
-            "wjets_matching_plus": "wjets",
-            "wjets_matching_minus": "wjets",
-
-            "wjets_scaling_plus": "wjets",
-            "wjets_scaling_minus": "wjets",
+            "ttbar_scale_plus": "ttbar",
+            "ttbar_scale_minus": "ttbar",
     }
 
     def __init__(self, options, args):
@@ -48,7 +44,7 @@ class Templates(template.templates.Templates):
                 self,
                 options, args,
                 disable_systematics=False if (options.systematic and
-                                              ("scaling" in options.systematic or
+                                              ("scale" in options.systematic or
                                                "matching" in options.systematic))
                                           else True)
 

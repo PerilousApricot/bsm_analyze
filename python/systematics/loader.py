@@ -91,8 +91,8 @@ class SystematicLoader(object):
                 systematics.__dict__[systematic] = channel
 
 class ScalingSystematicLoader(SystematicLoader):
-    channels = set(["ttbar", "ttbar_scaling_plus", "ttbar_scaling_minus",
-                    "wjets", "wjets_scaling_plus", "wjets_scaling_minus"])
+    channels = set(["ttbar", "ttbar_scale_plus", "ttbar_scale_minus",
+                    "wjets", "wjets_scale_plus", "wjets_scale_minus"])
 
     def __init__(self,
                  input_filename,
