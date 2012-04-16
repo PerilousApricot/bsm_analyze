@@ -28,8 +28,12 @@ class Templates(object):
             "qcd": "QCD data-driven",
             "stop": "Single-Top",
             "zjets": "Z/#gamma*#rightarrowl^{+}l^{-}",
+            "wb": "W#rightarrowl#nu (+bX)",
+            "wc": "W#rightarrowl#nu (+cX)",
+            "wlight": "W#rightarrowl#nu (+light)",
             "wjets": "W#rightarrowl#nu",
             "ttbar": "t#bar{t}",
+            "ttbar_powheg": "t#bar{t} [POWHEG]",
             "mc": "Total MC",
 
             "zprime_m1000_w10": "Z' 1 TeV/c^{2}",
@@ -104,6 +108,8 @@ class Templates(object):
                         comment for example.
 
                         Note: 'data' can be used to reference all Data channels
+
+            suffix      is added to each canvas when saved if any isspecified
         
         '''
 
@@ -111,12 +117,22 @@ class Templates(object):
         self._batch_mode = options.batch        # wait for Enter before exit
         self._input_filename = options.filename # ROOT file to load plots from
 
-        # Absolute scales for specific channels
-        if options.scales:
-            self._scales = Scales()
-            self._scales.load(options.scales)
+        if options.suffix:
+            self._canvas_template = "{0}_" + options.suffix + ".pdf"
         else:
-            self._scales = None
+            self._canvas_template = "{0}.pdf"
+
+        # Absolute scales for specific channels
+        self._scales = []
+        if options.scales:
+            for filename in options.scales.split(','):
+                scales = Scales()
+                scales.load(filename)
+
+                if self._verbose:
+                    print('loaded scales: ', scales)
+
+                self._scales.append(scales)
 
         # Relative fractions for specific channels
         if options.fractions:
@@ -180,7 +196,7 @@ class Templates(object):
                 channels = set(channel
                         for channel in channel_type.ChannelType.channel_types.keys()
                             if "matching" not in channel and
-                               "scaling" not in channel)
+                               "scale" not in channel)
             else:
                 channels = set(channel_type.ChannelType.channel_types.keys())
 
@@ -227,7 +243,8 @@ class Templates(object):
 
         # Save canvases
         for obj in canvases:
-            obj.canvas.SaveAs("{0}.pdf".format(obj.canvas.GetName()))
+            obj.canvas.SaveAs(self._canvas_template.format(
+                obj.canvas.GetName()))
 
         if canvases and not self._batch_mode:
             raw_input('enter')
@@ -371,7 +388,7 @@ class Templates(object):
 
             legend.Draw("9 same")
 
-            canvas.SaveAs("met_fit.pdf")
+            canvas.SaveAs(self._canvas_template.format("met_fit"))
 
             # Print found fractions
             if self._verbose:
@@ -471,36 +488,49 @@ class Templates(object):
         if not self._scales:
             return
 
-        if self._verbose:
-            print("{0:-<80}".format("-- Scales "))
+        for scales in self._scales:
+            if self._verbose:
+                print("{0:-<80}".format("-- Scales "))
 
-        # For each loaded plot/channel apply loaded scale if channel type
-        # matches scale type
-        for plot, channels in self.loader.plots.items():
-            # special treatment for MC background(s)
-            if "mc" in self._scales.scales and "mc" in channels:
-                mc_channels = (set(channels["mc"].allowed_inputs) &
-                               set(channels.keys()))
-                mc_scale = self._scales.scales["mc"]
-            else:
-                mc_channels = set()
-                mc_scale = 0
-
-            for channel_type, channel in channels.items():
-                if channel_type in self._scales.scales:
-                    scale = self._scales.scales[channel_type]
-                elif channel_type in mc_channels:
-                    scale = mc_scale
+            # For each loaded plot/channel apply loaded scale if channel type
+            # matches scale type
+            for plot, channels in self.loader.plots.items():
+                # special treatment for MC background(s)
+                if "mc" in scales.scales and "mc" in channels:
+                    mc_channels = (set(channels["mc"].allowed_inputs) &
+                                   set(channels.keys()))
+                    mc_scale = scales.scales["mc"]
                 else:
-                    continue
+                    mc_channels = set()
+                    mc_scale = 0
 
-                if "/mttbar_after_htlep" == plot:
-                    print("scale {0} by {1:.2f}".format(channel_type, scale))
+                if "mc" in channels:
+                    mc = MCChannelTemplate("mc")
+                else:
+                    mc = None
 
-                channel.hist.Scale(scale)
+                for channel_type, channel in channels.items():
+                    if channel_type in scales.scales:
+                        scale = scales.scales[channel_type]
+                    elif channel_type in mc_channels:
+                        scale = mc_scale
+                    else:
+                        continue
 
-        if self._verbose:
-            print()
+                    if "/mttbar_after_htlep" == plot:
+                        print("scale {0} by {1:.2f}".format(channel_type, scale))
+
+                    channel.hist.Scale(scale)
+
+                    # Update mc
+                    if None != mc and channel_type in mc.allowed_inputs:
+                        mc.add(channel)
+
+                if mc:
+                    channels["mc"] = mc
+
+            if self._verbose:
+                print()
 
     @Timer(label = "[plot templates]", verbose = True)
     def _plot(self):
@@ -529,7 +559,7 @@ class Templates(object):
             # extract Data
             data = channels.get("data")
 
-            obj.legend = ROOT.TLegend(.67, .60, .89, .88)
+            obj.legend = ROOT.TLegend(.7, .55, .88, .88)
             obj.legend.SetMargin(0.12);
             obj.legend.SetTextSize(0.03);
             obj.legend.SetFillColor(10);
@@ -722,6 +752,7 @@ class Templates(object):
         result.append(["batch mode", self._batch_mode])
         result.append(["input filename", self._input_filename])
         result.append(["scales", self._scales if self._scales else ""])
+        result.append(["canvas", self._canvas_template.format("canvas")])
 
         result.append(["fractions",
                        self.fractions if self.fractions else ""])

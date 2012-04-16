@@ -19,7 +19,11 @@ class ChannelStyle(BaseStyle):
     # represent style objects to be applied to histograms.
     channel_styles = {
             "ttbar": Style(ROOT.kRed + 1),
+            "ttbar_powheg": Style(ROOT.kRed + 2),
             "zjets": Style(ROOT.kBlue + 1),
+            "wb": Style(ROOT.kGreen + 3),
+            "wc": Style(ROOT.kGreen + 2),
+            "wlight": Style(ROOT.kGreen + 1),
             "wjets": Style(ROOT.kGreen + 1),
             "stop": Style(ROOT.kMagenta + 1),
 
@@ -34,14 +38,14 @@ class ChannelStyle(BaseStyle):
             "zprime_m4000_w40": Style(line_style = 9, fill_style = 0),
 
             # Systematic channels
-            "ttbar_scaling_plus": Style(ROOT.kRed + 1),
-            "ttbar_scaling_minus": Style(ROOT.kRed + 1),
+            "ttbar_scale_plus": Style(ROOT.kRed + 1),
+            "ttbar_scale_minus": Style(ROOT.kRed + 1),
 
             "ttbar_matching_plus": Style(ROOT.kRed + 1),
             "ttbar_matching_minus": Style(ROOT.kRed + 1),
 
-            "wjets_scaling_plus": Style(ROOT.kRed + 1),
-            "wjets_scaling_minus": Style(ROOT.kRed + 1),
+            "wjets_scale_plus": Style(ROOT.kRed + 1),
+            "wjets_scale_minus": Style(ROOT.kRed + 1),
 
             "wjets_matching_plus": Style(ROOT.kRed + 1),
             "wjets_matching_minus": Style(ROOT.kRed + 1) }

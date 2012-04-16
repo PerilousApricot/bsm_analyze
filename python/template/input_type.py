@@ -105,8 +105,8 @@ class InputType(BaseType):
         "ttbar": InputData(163 * 1.0, 3701947),
         "ttbar_powheg": InputData(163 * 1.0, 16330372),
 
-        "ttbar_scaling_plus": InputData(163 * 1.0, 930483),
-        "ttbar_scaling_minus": InputData(163 * 1.0, 967055),
+        "ttbar_scale_plus": InputData(163 * 1.0, 930483),
+        "ttbar_scale_minus": InputData(163 * 1.0, 967055),
 
         "ttbar_matching_plus": InputData(163 * 1.0, 1057479),
         "ttbar_matching_minus": InputData(163 * 1.0, 1065323),
@@ -115,10 +115,13 @@ class InputType(BaseType):
         "zjets": InputData(3048 * 1.0, 36277961),
 
         # Use NLO x-section: 31314 instead of LO: 27770
+        "wb": InputData(31314 * 1.0, 77105816),
+        "wc": InputData(31314 * 1.0, 77105816),
+        "wlight": InputData(31314 * 1.0, 77105816),
         "wjets": InputData(31314 * 1.0, 77105816),
 
-        "wjets_scaling_plus": InputData(31314 * 1.0, 9784907),
-        "wjets_scaling_minus": InputData(31314 * 1.0, 10022324),
+        "wjets_scale_plus": InputData(31314 * 1.0, 9784907),
+        "wjets_scale_minus": InputData(31314 * 1.0, 10022324),
 
         "wjets_matching_plus": InputData(31314 * 1.0, 10461655),
         "wjets_matching_minus": InputData(31314 * 1.0, 9956679),
@@ -230,13 +233,13 @@ if "__main__" == __name__:
             input_type = InputType("ttbar_powheg")
             self.assertEqual(input_type.type, "ttbar_powheg")
 
-        def test_ttbar_scaling_plus(self):
-            input_type = InputType("ttbar_scaling_plus")
-            self.assertEqual(input_type.type, "ttbar_scaling_plus")
+        def test_ttbar_scale_plus(self):
+            input_type = InputType("ttbar_scale_plus")
+            self.assertEqual(input_type.type, "ttbar_scale_plus")
 
-        def test_ttbar_scaling_minus(self):
-            input_type = InputType("ttbar_scaling_minus")
-            self.assertEqual(input_type.type, "ttbar_scaling_minus")
+        def test_ttbar_scale_minus(self):
+            input_type = InputType("ttbar_scale_minus")
+            self.assertEqual(input_type.type, "ttbar_scale_minus")
 
         def test_ttbar_matching_plus(self):
             input_type = InputType("ttbar_matching_plus")
@@ -254,13 +257,13 @@ if "__main__" == __name__:
             input_type = InputType("wjets")
             self.assertEqual(input_type.type, "wjets")
 
-        def test_wjets_scaling_plus(self):
-            input_type = InputType("wjets_scaling_plus")
-            self.assertEqual(input_type.type, "wjets_scaling_plus")
+        def test_wjets_scale_plus(self):
+            input_type = InputType("wjets_scale_plus")
+            self.assertEqual(input_type.type, "wjets_scale_plus")
 
-        def test_wjets_scaling_minus(self):
-            input_type = InputType("wjets_scaling_minus")
-            self.assertEqual(input_type.type, "wjets_scaling_minus")
+        def test_wjets_scale_minus(self):
+            input_type = InputType("wjets_scale_minus")
+            self.assertEqual(input_type.type, "wjets_scale_minus")
 
         def test_wjets_matching_plus(self):
             input_type = InputType("wjets_matching_plus")
