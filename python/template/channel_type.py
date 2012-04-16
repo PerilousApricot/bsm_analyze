@@ -19,10 +19,11 @@ class ChannelType(BaseType):
     # Input type may be added to Channel type
     channel_types = {
             "ttbar": ["ttbar"],
+            "ttbar_powheg": ["ttbar_powheg"],
             "zjets": ["zjets"],
 
-            "wbx": ["wbx"],
-            "wcx": ["wcx"],
+            "wb": ["wb"],
+            "wc": ["wc"],
             "wlight": ["wlight"],
             "wjets": ["wjets"],
 
@@ -43,13 +44,13 @@ class ChannelType(BaseType):
             # Systematic channels
             "ttbar_matching_plus": ["ttbar_matching_plus"],
             "ttbar_matching_minus": ["ttbar_matching_minus"],
-            "ttbar_scaling_plus": ["ttbar_scaling_plus"],
-            "ttbar_scaling_minus": ["ttbar_scaling_minus"],
+            "ttbar_scale_plus": ["ttbar_scale_plus"],
+            "ttbar_scale_minus": ["ttbar_scale_minus"],
 
             "wjets_matching_plus": ["wjets_matching_plus"],
             "wjets_matching_minus": ["wjets_matching_minus"],
-            "wjets_scaling_plus": ["wjets_scaling_plus"],
-            "wjets_scaling_minus": ["wjets_scaling_minus"] }
+            "wjets_scale_plus": ["wjets_scale_plus"],
+            "wjets_scale_minus": ["wjets_scale_minus"] }
 
     def __init__(self, channel_type):
         '''

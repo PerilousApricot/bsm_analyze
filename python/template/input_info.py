@@ -41,6 +41,7 @@ class InputInfo(object):
     __momentum_units = "GeV/c"
     __mass_units = "GeV/c^{2}"
     __mass_tev_units =  "TeV/c^{2}"
+    __angle_units = "rad"
 
     input_infos = {
         "/d0": InputData(units = "cm", title = "d0"),
@@ -82,13 +83,13 @@ class InputInfo(object):
         "/met_noweight": InputData(units = __mass_units, rebin = 25, title = "#slash{E}_{T}^{no weight}"),
         "/ltop_drsum": InputData(title = "#DeltaR_{sum}^{ltop}"),
         "/htop_drsum": InputData(title = "#DeltaR_{sum}^{htop}"),
-        "/htop_dphi": InputData(title = "#Delta#phi(ltop,htop)"),
+        "/htop_dphi": InputData(units=__angle_units, title = "#Delta#phi(ltop,htop)"),
         "/ltop/mass": InputData(units = __mass_units,
             rebin = 25,
             title = "M^{ltop}"),
 
         "/ltop/eta": InputData(rebin = 50, title = "#eta^{ltop}"),
-        "/ltop/phi": InputData(rebin = 50, title = "#phi^{ltop}"),
+        "/ltop/phi": InputData(units=__angle_units, rebin = 50, title = "#phi^{ltop}"),
 
         "/ltop/pt": InputData(units = __momentum_units,
             rebin = 25,
@@ -99,7 +100,7 @@ class InputInfo(object):
             title = "M^{htop}"),
 
         "/htop/eta": InputData(rebin = 50, title = "#eta^{htop}"),
-        "/htop/phi": InputData(rebin = 50, title = "#phi^{htop}"),
+        "/htop/phi": InputData(units=__angle_units, rebin = 50, title = "#phi^{htop}"),
 
         "/htop/pt": InputData(units = __momentum_units,
             rebin = 25,
@@ -111,7 +112,7 @@ class InputInfo(object):
 
         "/Electron/mass": InputData(units = __mass_units, title = "M^{e}"),
         "/Electron/eta": InputData(rebin = 50, title = "#eta^{e}"),
-        "/Electron/phi": InputData(rebin = 50, title = "#phi^{e}"),
+        "/Electron/phi": InputData(units=__angle_units, rebin = 50, title = "#phi^{e}"),
 
         "/First_jet/pt": InputData(units = __momentum_units,
             rebin = 25,
@@ -122,7 +123,7 @@ class InputInfo(object):
             title = "M^{jet1}"),
 
         "/First_jet/eta": InputData(rebin = 50, title = "#eta^{jet1}"),
-        "/First_jet/phi": InputData(rebin = 50, title = "#phi^{jet1}"),
+        "/First_jet/phi": InputData(units=__angle_units, rebin = 50, title = "#phi^{jet1}"),
 
         "/Second_jet/pt": InputData(units = __momentum_units,
             rebin = 25,
@@ -133,7 +134,7 @@ class InputInfo(object):
             title = "M^{jet2}"),
 
         "/Second_jet/eta": InputData(rebin = 50, title = "#eta^{jet2}"),
-        "/Second_jet/phi": InputData(rebin = 50, title = "#phi^{jet2}"),
+        "/Second_jet/phi": InputData(units=__angle_units, rebin = 50, title = "#phi^{jet2}"),
 
         "/Third_jet/pt": InputData(units = __momentum_units,
             rebin = 25,
@@ -144,7 +145,7 @@ class InputInfo(object):
             title = "M^{jet3}"),
 
         "/Third_jet/eta": InputData(rebin = 50, title = "#eta^{jet3}"),
-        "/Third_jet/phi": InputData(rebin = 50, title = "#phi^{jet3}"),
+        "/Third_jet/phi": InputData(units=__angle_units, rebin = 50, title = "#phi^{jet3}"),
 
 
         "/chi2": InputData(rebin = 10, title = "#Chi^{2}_{t#bar{t}}"),
