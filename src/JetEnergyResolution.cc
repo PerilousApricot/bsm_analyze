@@ -143,18 +143,18 @@ float JetEnergyResolution::scale(const float &reco_eta)
 
         case DOWN:
             if (0.5 > reco_eta)
-                return 0.114;
+                return -0.01;
 
             if (1.1 > reco_eta)
-                return 0.113;
+                return 0.;
 
             if (1.7 > reco_eta)
-                return 0.160;
+                return 0.032;
 
             if (2.3 > reco_eta)
-                return 0.226;
+                return 0.042;
 
-            return 0.487;
+            return 0.089;
 
         default:
             throw runtime_error("unsupported jet energy resolution systematic");
