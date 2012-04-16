@@ -23,6 +23,7 @@ def main(argv = sys.argv):
             raise Exception(usage(argv))
 
         for config in argv[1:]:
+            print("config: ", config)
             if not os.path.lexists(argv[1]):
                 print("configuration file does not exist: " + config,
                         file = sys.stderr)
