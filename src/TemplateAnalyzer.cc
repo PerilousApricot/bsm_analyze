@@ -434,6 +434,9 @@ TemplateAnalyzer::TemplateAnalyzer():
     _mttbar_after_htlep.reset(new H1Proxy(4000, 0, 4));
     monitor(_mttbar_after_htlep);
 
+    _normalization_mttbar.reset(new H1Proxy(4000, 0, 4));
+    monitor(_normalization_mttbar);
+
     _dr_vs_ptrel.reset(new H2Proxy(100, 0, 100, 15, 0, 1.5));
     monitor(_dr_vs_ptrel);
 
@@ -657,6 +660,10 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     _mttbar_after_htlep =
         dynamic_pointer_cast<H1Proxy>(object._mttbar_after_htlep->clone());
     monitor(_mttbar_after_htlep);
+
+    _normalization_mttbar =
+        dynamic_pointer_cast<H1Proxy>(object._normalization_mttbar->clone());
+    monitor(_normalization_mttbar);
 
     _dr_vs_ptrel = dynamic_pointer_cast<H2Proxy>(object._dr_vs_ptrel->clone());
     monitor(_dr_vs_ptrel);
@@ -989,6 +996,11 @@ const TemplateAnalyzer::H1Ptr TemplateAnalyzer::mttbarAfterHtlep() const
     return _mttbar_after_htlep->histogram();
 }
 
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::normalization_mttbar() const
+{
+    return _normalization_mttbar->histogram();
+}
+
 const TemplateAnalyzer::H2Ptr TemplateAnalyzer::drVsPtrel() const
 {
     return _dr_vs_ptrel->histogram();
@@ -1305,6 +1317,7 @@ void TemplateAnalyzer::process(const Event *event)
             dynamic_pointer_cast<SynchSelector>(_synch_selector->clone());
 
         _synch_selector_with_inverted_htlep->htlep()->invert();
+        _synch_selector_with_inverted_htlep->chi2()->invert();
     }
 
     if (!event->has_missing_energy())
@@ -1527,9 +1540,14 @@ void TemplateAnalyzer::process(const Event *event)
 
         Mttbar resonance = mttbar();
 
-        if (_synch_selector_with_inverted_htlep->reconstruction(resonance.valid)
-                && _synch_selector_with_inverted_htlep->ltop(pt(resonance.ltop)))
+        if (_synch_selector_with_inverted_htlep->reconstruction(resonance.valid) &&
+                _synch_selector_with_inverted_htlep->ltop(pt(resonance.ltop)) &&
+                _synch_selector_with_inverted_htlep->chi2(resonance.ltop_discriminator +
+                                                          resonance.htop_discriminator))
         {
+            normalization_mttbar()->fill(mass(resonance.mttbar) / 1000,
+                                         *_event_weight_inverted_htlep);
+
             htlep()->fill(htlepValue(), *_event_weight_inverted_htlep);
             htlepBeforeHtlep()->fill(htlepValue(),
                                      *_event_weight_inverted_htlep);
