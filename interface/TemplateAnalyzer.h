@@ -223,6 +223,7 @@ namespace bsm
 
             const H1Ptr mttbarBeforeHtlep() const;
             const H1Ptr mttbarAfterHtlep() const;
+            const H1Ptr normalization_mttbar() const;
             const H2Ptr drVsPtrel() const;
 
             const H1Ptr ttbarPt() const;
@@ -376,6 +377,8 @@ namespace bsm
             H1ProxyPtr _chi2;
             H1ProxyPtr _htop_chi2;
             H1ProxyPtr _ltop_chi2;
+
+            H1ProxyPtr _normalization_mttbar;
 
             Counter *_secondary_lepton_counter;
             Counter *_leading_jet_counter;
