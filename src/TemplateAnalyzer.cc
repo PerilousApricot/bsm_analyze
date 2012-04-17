@@ -1369,159 +1369,166 @@ void TemplateAnalyzer::process(const Event *event)
         Mttbar resonance = mttbar();
 
         if (_synch_selector->reconstruction(resonance.valid) &&
-            _synch_selector->ltop(pt(resonance.ltop)) &&
-            _synch_selector->chi2(resonance.ltop_discriminator +
-                                  resonance.htop_discriminator))
+            _synch_selector->ltop(pt(resonance.ltop)))
         {
-            const LorentzVector &el_p4 =
-                _synch_selector->goodElectrons()[0]->physics_object().p4();
-
-            // fill ltop drsum
-            //
-            ltop_drsum()->fill(dr(resonance.ltop, el_p4) +
-                                   dr(resonance.ltop, resonance.neutrino) +
-                                   dr(resonance.ltop, resonance.ltop_jet),
-                               *_event_weight);
-
-            if (1 < resonance.htop_jets.size())
+            if (_synch_selector->chi2(resonance.ltop_discriminator +
+                                      resonance.htop_discriminator))
             {
-                float drsum = 0;
-                for(ResonanceReconstructor::CorrectedJets::const_iterator jet =
-                            resonance.htop_jets.begin();
-                        resonance.htop_jets.end() != jet;
-                        ++jet)
+                const LorentzVector &el_p4 =
+                    _synch_selector->goodElectrons()[0]->physics_object().p4();
+
+                // fill ltop drsum
+                //
+                ltop_drsum()->fill(dr(resonance.ltop, el_p4) +
+                                       dr(resonance.ltop, resonance.neutrino) +
+                                       dr(resonance.ltop, resonance.ltop_jet),
+                                   *_event_weight);
+
+                if (1 < resonance.htop_jets.size())
                 {
-                    drsum += dr(resonance.htop, *jet->corrected_p4);
+                    float drsum = 0;
+                    for(ResonanceReconstructor::CorrectedJets::const_iterator jet =
+                                resonance.htop_jets.begin();
+                            resonance.htop_jets.end() != jet;
+                            ++jet)
+                    {
+                        drsum += dr(resonance.htop, *jet->corrected_p4);
+                    }
+
+                    htop_drsum()->fill(drsum, *_event_weight);
                 }
 
-                htop_drsum()->fill(drsum, *_event_weight);
-            }
-
-            htop_dphi()->fill(dphi(resonance.htop, resonance.ltop),
-                              *_event_weight);
-
-            chi2()->fill(resonance.ltop_discriminator +
-                            resonance.htop_discriminator,
-                         *_event_weight);
-
-            ltop_chi2()->fill(resonance.ltop_discriminator,
-                              *_event_weight);
-
-            htop_chi2()->fill(resonance.htop_discriminator,
-                              *_event_weight);
-
-            mttbarAfterHtlep()->fill(mass(resonance.mttbar) / 1000,
-                                     *_event_weight);
-
-            ttbarPt()->fill(pt(resonance.mttbar), *_event_weight);
-
-            wlepMt()->fill(mt(resonance.neutrino, el_p4), *_event_weight);
-
-            wlepMass()->fill(mass(resonance.wlep), *_event_weight);
-            whadMass()->fill(mass(resonance.whad), *_event_weight);
-
-            monitorJets();
-
-            _electron->fill(el_p4, *_event_weight);
-
-            _ltop->fill(resonance.ltop, *_event_weight);
-            _htop->fill(resonance.htop, *_event_weight);
-            
-            npv()->fill(event->primary_vertex().size());
-
-            npvWithPileup()->fill(event->primary_vertex().size(),
+                htop_dphi()->fill(dphi(resonance.htop, resonance.ltop),
                                   *_event_weight);
 
-            njets()->fill(_synch_selector->goodJets().size(),
-                          *_event_weight);
+                chi2()->fill(resonance.ltop_discriminator +
+                                resonance.htop_discriminator,
+                             *_event_weight);
 
-            const LorentzVector &missing_energy = *_synch_selector->goodMET();
-            ljetMetDphivsMet()->fill(
-                    pt(missing_energy),
-                    fabs(dphi(*_synch_selector->goodJets()[0].corrected_p4,
-                              missing_energy)),
-                    *_event_weight);
+                ltop_chi2()->fill(resonance.ltop_discriminator,
+                                  *_event_weight);
 
-            met()->fill(pt(missing_energy), *_event_weight);
-            metNoWeight()->fill(pt(missing_energy));
+                htop_chi2()->fill(resonance.htop_discriminator,
+                                  *_event_weight);
 
-            htopNjets()->fill(resonance.htop_jets.size(), *_event_weight);
+                mttbarAfterHtlep()->fill(mass(resonance.mttbar) / 1000,
+                                         *_event_weight);
 
-            const ResonanceReconstructor::CorrectedJets &htop_jets =
-                resonance.htop_jets;
+                ttbarPt()->fill(pt(resonance.mttbar), *_event_weight);
 
-            if (1 < htop_jets.size())
-            {
-                htopDeltaR()->fill(dr(*htop_jets[0].corrected_p4,
-                                      *htop_jets[1].corrected_p4),
-                                   *_event_weight);
-            }
+                wlepMt()->fill(mt(resonance.neutrino, el_p4), *_event_weight);
 
-            htopNjetvsM()->fill(mass(resonance.htop),
-                                resonance.htop_njets,
-                                *_event_weight);
+                wlepMass()->fill(mass(resonance.wlep), *_event_weight);
+                whadMass()->fill(mass(resonance.whad), *_event_weight);
 
-            htopPtvsM()->fill(mass(resonance.htop),
-                              pt(resonance.htop),
+                monitorJets();
+
+                _electron->fill(el_p4, *_event_weight);
+
+                _ltop->fill(resonance.ltop, *_event_weight);
+                _htop->fill(resonance.htop, *_event_weight);
+                
+                npv()->fill(event->primary_vertex().size());
+
+                npvWithPileup()->fill(event->primary_vertex().size(),
+                                      *_event_weight);
+
+                njets()->fill(_synch_selector->goodJets().size(),
                               *_event_weight);
 
-            htopPtvsNjets()->fill(resonance.htop_njets,
+                const LorentzVector &missing_energy = *_synch_selector->goodMET();
+                ljetMetDphivsMet()->fill(
+                        pt(missing_energy),
+                        fabs(dphi(*_synch_selector->goodJets()[0].corrected_p4,
+                                  missing_energy)),
+                        *_event_weight);
+
+                met()->fill(pt(missing_energy), *_event_weight);
+                metNoWeight()->fill(pt(missing_energy));
+
+                htopNjets()->fill(resonance.htop_jets.size(), *_event_weight);
+
+                const ResonanceReconstructor::CorrectedJets &htop_jets =
+                    resonance.htop_jets;
+
+                if (1 < htop_jets.size())
+                {
+                    htopDeltaR()->fill(dr(*htop_jets[0].corrected_p4,
+                                          *htop_jets[1].corrected_p4),
+                                       *_event_weight);
+                }
+
+                htopNjetvsM()->fill(mass(resonance.htop),
+                                    resonance.htop_njets,
+                                    *_event_weight);
+
+                htopPtvsM()->fill(mass(resonance.htop),
                                   pt(resonance.htop),
                                   *_event_weight);
 
-            htopPtvsLtoppt()->fill(pt(resonance.ltop),
-                                   pt(resonance.htop),
-                                   *_event_weight);
+                htopPtvsNjets()->fill(resonance.htop_njets,
+                                      pt(resonance.htop),
+                                      *_event_weight);
 
-            leptonMetDphivsMet()->fill(pt(missing_energy),
-                                       fabs(dphi(el_p4, missing_energy)),
+                htopPtvsLtoppt()->fill(pt(resonance.ltop),
+                                       pt(resonance.htop),
                                        *_event_weight);
 
-            htlep()->fill(htlepValue(), *_event_weight);
-            htall()->fill(htallValue(), *_event_weight);
+                leptonMetDphivsMet()->fill(pt(missing_energy),
+                                           fabs(dphi(el_p4, missing_energy)),
+                                           *_event_weight);
 
-            htlepAfterHtlep()->fill(htlepValue(), *_event_weight);
+                htlep()->fill(htlepValue(), *_event_weight);
+                htall()->fill(htallValue(), *_event_weight);
 
-            solutions()->fill(resonance.solutions);
+                htlepAfterHtlep()->fill(htlepValue(), *_event_weight);
 
-            if (0 < htop_jets.size())
-            {
-                htopJet1()->fill(*htop_jets[0].corrected_p4,
-                                 *_event_weight);
+                solutions()->fill(resonance.solutions);
+
+                if (0 < htop_jets.size())
+                {
+                    htopJet1()->fill(*htop_jets[0].corrected_p4,
+                                     *_event_weight);
+                }
+                
+                if (1 < htop_jets.size())
+                {
+                    htopJet2()->fill(*htop_jets[1].corrected_p4,
+                                     *_event_weight);
+                }
+
+                if (2 < htop_jets.size())
+                {
+                    htopJet3()->fill(*htop_jets[2].corrected_p4,
+                                     *_event_weight);
+                }
+
+                if (3 < htop_jets.size())
+                {
+                    htopJet4()->fill(*htop_jets[3].corrected_p4,
+                                     *_event_weight);
+                }
+
+                ltopJet1()->fill(resonance.ltop_jet, *_event_weight);
+
+                njetsAfterReconstruction()->fill(_synch_selector->goodJets().size(),
+                                                 *_event_weight);
+
+                if (2 == _synch_selector->goodJets().size())
+                {
+                    njet2DrLeptonJet1AfterReconstruction()->fill(
+                            dr(el_p4, *_synch_selector->goodJets()[0].corrected_p4),
+                            *_event_weight);
+
+                    njet2DrLeptonJet2AfterReconstruction()->fill(
+                            dr(el_p4, *_synch_selector->goodJets()[1].corrected_p4),
+                            *_event_weight);
+                }
             }
-            
-            if (1 < htop_jets.size())
+            else
             {
-                htopJet2()->fill(*htop_jets[1].corrected_p4,
-                                 *_event_weight);
-            }
-
-            if (2 < htop_jets.size())
-            {
-                htopJet3()->fill(*htop_jets[2].corrected_p4,
-                                 *_event_weight);
-            }
-
-            if (3 < htop_jets.size())
-            {
-                htopJet4()->fill(*htop_jets[3].corrected_p4,
-                                 *_event_weight);
-            }
-
-            ltopJet1()->fill(resonance.ltop_jet, *_event_weight);
-
-            njetsAfterReconstruction()->fill(_synch_selector->goodJets().size(),
+                normalization_mttbar()->fill(mass(resonance.mttbar) / 1000,
                                              *_event_weight);
-
-            if (2 == _synch_selector->goodJets().size())
-            {
-                njet2DrLeptonJet1AfterReconstruction()->fill(
-                        dr(el_p4, *_synch_selector->goodJets()[0].corrected_p4),
-                        *_event_weight);
-
-                njet2DrLeptonJet2AfterReconstruction()->fill(
-                        dr(el_p4, *_synch_selector->goodJets()[1].corrected_p4),
-                        *_event_weight);
             }
         }
     }
@@ -1545,9 +1552,6 @@ void TemplateAnalyzer::process(const Event *event)
                 _synch_selector_with_inverted_htlep->chi2(resonance.ltop_discriminator +
                                                           resonance.htop_discriminator))
         {
-            normalization_mttbar()->fill(mass(resonance.mttbar) / 1000,
-                                         *_event_weight_inverted_htlep);
-
             htlep()->fill(htlepValue(), *_event_weight_inverted_htlep);
             htlepBeforeHtlep()->fill(htlepValue(),
                                      *_event_weight_inverted_htlep);
