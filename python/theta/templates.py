@@ -107,36 +107,31 @@ class Templates(template.templates.Templates):
 
         '''
 
-        # Make sure required plot is loaded
-        channels = self.loader.plots.get("/mttbar_after_htlep")
-        if not channels:
-            raise RuntimeError("mttbar_after_htlep is not loaded")
-
-        # format string has different format with(-out) systematics
-        format_string = str(self.theta_prefix) + "_mttbar__{channel}"
-        if self.suffix:
-            format_string += self.suffix
-
         with topen(self.output_filename, "update"):
-            # save only those channels that are supported or specified by user
-            for channel_type, channel in channels.items():
-                if (channel_type not in self.channel_names or
-                        (self.save_channels and
-                         channel_type not in self.save_channels)):
+            for plot_name, channels in self.loader.plots.items():
+                plot_name = plot_name[1:].replace('/', '_')
 
-                    continue
+                # format string has different format with(-out) systematics
+                format_string = str(self.theta_prefix) + "_{plot}__{channel}"
+                if self.suffix:
+                    format_string += self.suffix
 
-                # All Zprimes are originally normalized to 5pb. Scale to 1pb
-                if channel_type.startswith("zprime"):
-                    channel.hist.Scale(1. / 5)
+                # save only those channels that are supported or specified by user
+                for channel_type, channel in channels.items():
+                    if (channel_type not in self.channel_names or
+                            (self.save_channels and
+                             channel_type not in self.save_channels)):
 
-                name = format_string.format(
-                        channel=self.channel_names[channel_type])
+                        continue
 
-                hist = channel.hist.Clone(name)
-                hist.SetTitle(channel.hist.GetTitle())
+                    name = format_string.format(
+                            plot="mttbar" if "mttbar_after_htlep" == plot_name else plot_name,
+                            channel=self.channel_names[channel_type])
 
-                hist.Write(name)
+                    hist = channel.hist.Clone(name)
+                    hist.SetTitle(channel.hist.GetTitle())
+
+                    hist.Write(name)
 
     def __str__(self):
         '''
