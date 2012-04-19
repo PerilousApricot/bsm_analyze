@@ -5,7 +5,7 @@ Created by Samvel Khalatyan, Mar 12, 2012
 Copyright 2011, All rights reserved
 '''
 
-from __future__ import print_function
+from __future__ import print_function,division
 
 import math
 import sys
@@ -145,6 +145,9 @@ class Templates(template.templates.Templates):
 
             obj.canvas.Update()
             canvases.append(obj)
+
+            print("Powheg/Madgraph: {0:.2f}".format(
+                ttbar_powheg.hist.Integral() / ttbar.hist.Integral()))
 
         return canvases
 
