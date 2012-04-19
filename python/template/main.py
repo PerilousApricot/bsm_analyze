@@ -70,6 +70,11 @@ def parser():
             action="store",
             help="Suffix for canvases to be stored")
 
+    parser.add_option(
+            "--log",
+            action="store_true", default=False,
+            help = "Generate plots in Log scale")
+
     return parser
 
 def main():

@@ -148,7 +148,7 @@ class InputInfo(object):
         "/Third_jet/phi": InputData(units=__angle_units, rebin = 50, title = "#phi^{jet3}"),
 
 
-        "/chi2": InputData(rebin = 10, title = "#Chi^{2}_{t#bar{t}}"),
+        "/chi2": InputData(rebin = 50, title = "#Chi^{2}_{t#bar{t}}"),
         "/ttbar_pt": InputData(units = __momentum_units,
                 rebin = 25,
                 title = "p_{T}^{t#bar{t}}"),

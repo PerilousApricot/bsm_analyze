@@ -42,7 +42,7 @@ class InputTemplate(InputType, Template, InputInfo):
         Luminosity, aka amount of processed data
         '''
 
-        return 4401.31
+        return 4367.39
 
     @property
     def scale(self):

@@ -133,11 +133,19 @@ class InputType(BaseType):
         "satop_t": InputData(22.65 * 1.0, 1944826),
         "satop_tw": InputData(7.87 * 1.0, 809984),
 
+        # narrow resonances
         "zprime_m1000_w10": InputData(1.0, 207992),
         "zprime_m1500_w15": InputData(1.0, 168383),
         "zprime_m2000_w20": InputData(1.0, 179315),
         "zprime_m3000_w30": InputData(1.0, 195410),
         "zprime_m4000_w40": InputData(1.0, 180381),
+
+        # wide resonances
+        "zprime_m1000_w100": InputData(1.0, 228928),
+        "zprime_m1500_w150": InputData(1.0, 195202),
+        "zprime_m2000_w200": InputData(1.0, 209399),
+        "zprime_m3000_w300": InputData(1.0, 220597),
+        "zprime_m4000_w400": InputData(1.0, 230839),
 
         # zero number of events will indicate: do-not scale
         "rereco_2011a_may10": InputData(1, 0),

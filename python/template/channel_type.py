@@ -35,11 +35,19 @@ class ChannelType(BaseType):
 
             "qcd": ["qcd_from_data"],
 
+            # narrow resonances
             "zprime_m1000_w10": ["zprime_m1000_w10"],
             "zprime_m1500_w15": ["zprime_m1500_w15"],
             "zprime_m2000_w20": ["zprime_m2000_w20"],
             "zprime_m3000_w30": ["zprime_m3000_w30"],
             "zprime_m4000_w40": ["zprime_m4000_w40"],
+
+            # wide resonances
+            "zprime_m1000_w100": ["zprime_m1000_w100"],
+            "zprime_m1500_w150": ["zprime_m1500_w150"],
+            "zprime_m2000_w200": ["zprime_m2000_w200"],
+            "zprime_m3000_w300": ["zprime_m3000_w300"],
+            "zprime_m4000_w400": ["zprime_m4000_w400"],
 
             # Systematic channels
             "ttbar_matching_plus": ["ttbar_matching_plus"],

@@ -9,6 +9,7 @@ from __future__ import division, print_function
 
 import compare
 import channel_type
+import re
 import root.label
 import root.style
 import ROOT
@@ -16,6 +17,7 @@ import sys
 
 from channel_template import MCChannelTemplate
 from input_template import InputTemplate
+from input_type import InputType
 from loader import ChannelTemplateLoader
 from root.comparison import ComparisonCanvas
 from scales import Scales
@@ -40,7 +42,14 @@ class Templates(object):
             "zprime_m1500_w15": "Z' 1.5 TeV/c^{2}",
             "zprime_m2000_w20": "Z' 2 TeV/c^{2}",
             "zprime_m3000_w30": "Z' 3 TeV/c^{2}",
-            "zprime_m4000_w40": "Z' 4 TeV/c^{2}"}
+            "zprime_m4000_w40": "Z' 4 TeV/c^{2}",
+            
+            "zprime_m1000_w100": "Z' 1 TeV/c^{2} (w)",
+            "zprime_m1500_w150": "Z' 1.5 TeV/c^{2} (w)",
+            "zprime_m2000_w200": "Z' 2 TeV/c^{2} (w)",
+            "zprime_m3000_w300": "Z' 3 TeV/c^{2} (w)",
+            "zprime_m4000_w400": "Z' 4 TeV/c^{2} (w)"
+            }
 
     def __init__(self, options, args, disable_systematics=True):
         '''
@@ -116,6 +125,7 @@ class Templates(object):
         self._verbose = options.verbose
         self._batch_mode = options.batch        # wait for Enter before exit
         self._input_filename = options.filename # ROOT file to load plots from
+        self._logy = options.log
 
         if options.suffix:
             self._canvas_template = "{0}_" + options.suffix + ".pdf"
@@ -201,11 +211,11 @@ class Templates(object):
                 channels = set(channel_type.ChannelType.channel_types.keys())
 
             if use_channels:
-                channels &= use_channels
+                channels &= self._expand_channels(use_channels)
 
             # remove banned channels
             if ban_channels:
-                channels -= ban_channels
+                channels -= self._expand_channels(ban_channels)
 
             self.use_channels = list(channels)
 
@@ -302,7 +312,11 @@ class Templates(object):
             met_noweight = self.loader.plots["/met_noweight"].get("mc")
 
             # make sure weighted channels are available
-            missing_channels = set(["data", "qcd", "mc"]) - set(met.keys())
+            if "qcd" in self.use_channels:
+                missing_channels = set(["data", "qcd", "mc"]) - set(met.keys())
+            else:
+                missing_channels = set(["data", "mc"]) - set(met.keys())
+
             if missing_channels:
                 raise RuntimeError("channels {0!r} are not loaded".format(
                     map(str.upper, missing_channels)))
@@ -324,7 +338,8 @@ class Templates(object):
             # prepare variable tempaltes for TFractionFitter
             templates = ROOT.TObjArray(2)
             templates.Add(met_noweight.hist)
-            templates.Add(met["qcd"].hist)
+            if "qcd" in self.use_channels:
+                templates.Add(met["qcd"].hist)
 
             # Setup TFractionFitter
             fitter = ROOT.TFractionFitter(met["data"].hist, templates)
@@ -343,18 +358,22 @@ class Templates(object):
             fitter.GetResult(0, fraction, fraction_error)
             self.fractions["mc"] = float(fraction)
 
-            fitter.GetResult(1, fraction, fraction_error)
-            self.fractions["qcd"] = float(fraction)
+            if "qcd" in self.use_channels:
+                fitter.GetResult(1, fraction, fraction_error)
+                self.fractions["qcd"] = float(fraction)
 
             # plot Fitter result and save canvas
             tff_hist = fitter.GetPlot().Clone()
-            qcd_hist = met["qcd"].hist.Clone()
+
             mc_hist = met["mc"].hist.Clone()
             data_hist = met["data"].hist.Clone()
 
-            qcd_hist.Scale(self.fractions["qcd"] *
-                           data_hist.Integral() /
-                           qcd_hist.Integral())
+            if "qcd" in self.use_channels:
+                qcd_hist = met["qcd"].hist.Clone()
+
+                qcd_hist.Scale(self.fractions["qcd"] *
+                               data_hist.Integral() /
+                               qcd_hist.Integral())
 
             mc_hist.Scale(self.fractions["mc"] *
                           data_hist.Integral() /
@@ -379,10 +398,15 @@ class Templates(object):
             tff_hist.Draw("hist 9")
             data_hist.Draw("e 9 same")
             mc_hist.Draw("hist same 9")
-            qcd_hist.Draw("hist same 9")
+
+            if "qcd" in self.use_channels:
+                qcd_hist.Draw("hist same 9")
 
             legend.AddEntry(data_hist, "Data 2011", "le")
-            legend.AddEntry(qcd_hist, "QCD data-driven", "fe")
+
+            if "qcd" in self.use_channels:
+                legend.AddEntry(qcd_hist, "QCD data-driven", "fe")
+
             legend.AddEntry(mc_hist, "Monte-Carlo", "fe")
             legend.AddEntry(tff_hist, "Fit", "l")
 
@@ -426,15 +450,22 @@ class Templates(object):
                 print("{0:-<80}".format("-- TFractionFitter "))
 
             mc_fraction = self.fractions["mc"]
-            qcd_fraction = self.fractions["qcd"]
+
+            if "qcd" in self.use_channels:
+                qcd_fraction = self.fractions["qcd"]
 
             # For each loaded plot scale MC and QCD
             for plot, channels in self.loader.plots.items():
                 try:
                     # Make sure all necessary channels were loaded for the
                     # histogram
-                    missing_channels = (set(["data", "mc", "qcd"]) -
-                                        set(channels.keys()))
+                    if "qcd" in self.use_channels:
+                        missing_channels = (set(["data", "mc", "qcd"]) -
+                                            set(channels.keys()))
+                    else:
+                        missing_channels = (set(["data", "mc"]) -
+                                            set(channels.keys()))
+
                     if missing_channels:
                         raise RuntimeError(("channels {0!r} are not loaded for "
                                             "{1} template").format(
@@ -445,13 +476,15 @@ class Templates(object):
                     # Cache 
                     data_integral = channels["data"].hist.Integral()
                     mc_hist = channels["mc"].hist
-                    qcd_hist = channels["qcd"].hist
 
-                    qcd_scale = (qcd_fraction *
-                                 data_integral /
-                                 qcd_hist.Integral())
+                    if "qcd" in self.use_channels:
+                        qcd_hist = channels["qcd"].hist
 
-                    qcd_hist.Scale(qcd_scale)
+                        qcd_scale = (qcd_fraction *
+                                     data_integral /
+                                     qcd_hist.Integral())
+
+                        qcd_hist.Scale(qcd_scale)
 
                     mc_scale = (mc_fraction *
                                 data_integral /
@@ -466,10 +499,15 @@ class Templates(object):
                         channels[channel_type].hist.Scale(mc_scale)
 
                     if self._verbose and "/mttbar_after_htlep" == plot:
-                        print(" mttbar scales",
-                              " MC: {0:.2f}".format(mc_scale),
-                              "QCD: {0:.2f}".format(qcd_scale),
-                              "", sep = "\n")
+                        if "qcd" in self.use_channels:
+                            print(" mttbar scales",
+                                  " MC: {0:.2f}".format(mc_scale),
+                                  "QCD: {0:.2f}".format(qcd_scale),
+                                  "", sep = "\n")
+                        else:
+                            print(" mttbar scales",
+                                  " MC: {0:.2f}".format(mc_scale),
+                                  "", sep = "\n")
 
                 except RuntimeError as error:
                     print("failed to apply TFractionFitter scales - {0}".format(error),
@@ -682,7 +720,10 @@ class Templates(object):
                 pad.SetBottomMargin(0.15)
 
             obj.canvas.SetName("canvas_" + plot_name.replace("/", "_"))
-            obj.canvas.cd(1)
+            pad = obj.canvas.cd(1)
+
+            if self._logy:
+                pad.SetLogy()
 
             # use data or background to draw axes
             obj.axis_hist = None
@@ -740,6 +781,24 @@ class Templates(object):
             canvases.append(obj)
 
         return canvases
+
+    def _expand_channels(self, channels):
+        if "zp" in channels:
+            channels.remove("zp")
+            channels.update(set(x for x in channel_type.ChannelType.channel_types.keys()
+                                if re.match("^zprime_m\d{4}_w.{2}$", x)))
+
+        if "zpwide" in channels:
+            channels.remove("zpwide")
+            channels.update(set(x for x in channel_type.ChannelType.channel_types.keys()
+                                if re.match("^zprime_m\d{4}_w\d{3}$", x)))
+
+        if "mc" in channels:
+            channels.remove('mc')
+            channels.update(set(MCChannelTemplate.channel_types["mc"]))
+
+
+        return channels
 
     def __str__(self):
         '''
