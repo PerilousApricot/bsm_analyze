@@ -26,17 +26,26 @@ class Templates(template.templates.Templates):
             "qcd": "eleqcd",
             "data": "DATA",
 
+            # narrow resonances
             "zprime_m1000_w10": "zp1000",
             "zprime_m1500_w15": "zp1500",
             "zprime_m2000_w20": "zp2000",
             "zprime_m3000_w30": "zp3000",
             "zprime_m4000_w40": "zp4000",
 
+            # wide resonances
             "zprime_m1000_w100": "zp1000wide",
             "zprime_m1500_w150": "zp1500wide",
             "zprime_m2000_w200": "zp2000wide",
             "zprime_m3000_w300": "zp3000wide",
             "zprime_m4000_w400": "zp4000wide",
+
+            # rsgluon
+            "rsgluon_m1000": "rsg1000",
+            "rsgluon_m1500": "rsg1500",
+            "rsgluon_m2000": "rsg2000",
+            "rsgluon_m3000": "rsg3000",
+            "rsgluon_m4000": "rsg4000",
 
             "ttbar_matching_plus": "ttbar",
             "ttbar_matching_minus": "ttbar",

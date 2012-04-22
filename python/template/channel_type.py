@@ -40,14 +40,21 @@ class ChannelType(BaseType):
             "zprime_m1500_w15": ["zprime_m1500_w15"],
             "zprime_m2000_w20": ["zprime_m2000_w20"],
             "zprime_m3000_w30": ["zprime_m3000_w30"],
-            "zprime_m4000_w40": ["zprime_m4000_w40"],
+            #"zprime_m4000_w40": ["zprime_m4000_w40"],
 
             # wide resonances
             "zprime_m1000_w100": ["zprime_m1000_w100"],
             "zprime_m1500_w150": ["zprime_m1500_w150"],
             "zprime_m2000_w200": ["zprime_m2000_w200"],
             "zprime_m3000_w300": ["zprime_m3000_w300"],
-            "zprime_m4000_w400": ["zprime_m4000_w400"],
+            #"zprime_m4000_w400": ["zprime_m4000_w400"],
+
+            # rsgluons
+            "rsgluon_m1000": ["rsgluon_m1000"],
+            "rsgluon_m1500": ["rsgluon_m1500"],
+            "rsgluon_m2000": ["rsgluon_m2000"],
+            "rsgluon_m2500": ["rsgluon_m2500"],
+            "rsgluon_m3000": ["rsgluon_m3000"],
 
             # Systematic channels
             "ttbar_matching_plus": ["ttbar_matching_plus"],
@@ -125,9 +132,11 @@ if "__main__" == __name__:
             input_type = ChannelType("zprime_m3000_w30")
             self.assertEqual(input_type.type, "zprime_m3000_w30")
 
+        '''
         def test_zprime_m4000_w40(self):
             input_type = ChannelType("zprime_m4000_w40")
             self.assertEqual(input_type.type, "zprime_m4000_w40")
+        '''
 
         def test_qcd(self):
             input_type = ChannelType("qcd")

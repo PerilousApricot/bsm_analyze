@@ -42,13 +42,19 @@ class Templates(object):
             "zprime_m1500_w15": "Z' 1.5 TeV/c^{2}",
             "zprime_m2000_w20": "Z' 2 TeV/c^{2}",
             "zprime_m3000_w30": "Z' 3 TeV/c^{2}",
-            "zprime_m4000_w40": "Z' 4 TeV/c^{2}",
+            #"zprime_m4000_w40": "Z' 4 TeV/c^{2}",
             
             "zprime_m1000_w100": "Z' 1 TeV/c^{2} (w)",
             "zprime_m1500_w150": "Z' 1.5 TeV/c^{2} (w)",
             "zprime_m2000_w200": "Z' 2 TeV/c^{2} (w)",
             "zprime_m3000_w300": "Z' 3 TeV/c^{2} (w)",
-            "zprime_m4000_w400": "Z' 4 TeV/c^{2} (w)"
+            #"zprime_m4000_w400": "Z' 4 TeV/c^{2} (w)",
+
+            "rsgluon_m1000": "KKGluon 1 TeV/c^{2}",
+            "rsgluon_m1500": "KKGluon 1.5 TeV/c^{2}",
+            "rsgluon_m2000": "KKGluon 2 TeV/c^{2}",
+            "rsgluon_m2500": "KKGluon 2.5 TeV/c^{2}",
+            "rsgluon_m3000": "KKGluon 3 TeV/c^{2}"
             }
 
     def __init__(self, options, args, disable_systematics=True):
@@ -648,7 +654,8 @@ class Templates(object):
                 for h in [obj.bg_combo if obj.bg_combo else None,
                           data.hist if data else None] +
                          [ch.hist for name, ch in channels.items()
-                             if name.startswith("zprime")] if h)
+                             if (name.startswith("zprime") or
+                                 name.startswith("rsgluon"))] if h)
 
             # take care of ratio
             if self._ratio:
@@ -733,7 +740,7 @@ class Templates(object):
                 obj.axis_hist = obj.bg_combo.Clone()
             else:
                 for name, channel in channels.items():
-                    if name.startswith("zprime"):
+                    if name.startswith("zprime") or name.startswith("rsgluon"):
                         obj.axis_hist = channel.hist.Clone()
                         break
 
@@ -764,7 +771,9 @@ class Templates(object):
 
             # draw signals
             for channel_type, channel in channels.items():
-                if channel_type.startswith("zprime"):
+                if (channel_type.startswith("zprime") or
+                    channel_type.startswith("rsgluon")):
+
                     obj.legend.AddEntry(channel.hist,
                             self.channel_names.get(channel_type, "unknown signal"),
                             "l")
@@ -786,12 +795,17 @@ class Templates(object):
         if "zp" in channels:
             channels.remove("zp")
             channels.update(set(x for x in channel_type.ChannelType.channel_types.keys()
-                                if re.match("^zprime_m\d{4}_w.{2}$", x)))
+                                if re.match("^zprime_m\d{4}_w\d{2}$", x)))
 
         if "zpwide" in channels:
             channels.remove("zpwide")
             channels.update(set(x for x in channel_type.ChannelType.channel_types.keys()
                                 if re.match("^zprime_m\d{4}_w\d{3}$", x)))
+
+        if "rsgluon" in channels:
+            channels.remove("rsgluon")
+            channels.update(set(x for x in channel_type.ChannelType.channel_types.keys()
+                                if re.match("^rsgluon_m\d{4}$", x)))
 
         if "mc" in channels:
             channels.remove('mc')
