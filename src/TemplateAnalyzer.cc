@@ -1280,7 +1280,7 @@ void TemplateAnalyzer::onFileOpen(const std::string &filename, const Input *inpu
 {
     if (input->has_type())
     {
-        _use_pileup = (Input::DATA != input->type());
+        _use_pileup = (Input::DATA != input->type() && Input::RSGLUON != input->type());
 
         if (Input::WJETS == input->type())
         {
