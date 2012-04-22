@@ -32,6 +32,12 @@ class Templates(template.templates.Templates):
             "zprime_m3000_w30": "zp3000",
             "zprime_m4000_w40": "zp4000",
 
+            "zprime_m1000_w100": "zp1000wide",
+            "zprime_m1500_w150": "zp1500wide",
+            "zprime_m2000_w200": "zp2000wide",
+            "zprime_m3000_w300": "zp3000wide",
+            "zprime_m4000_w400": "zp4000wide",
+
             "ttbar_matching_plus": "ttbar",
             "ttbar_matching_minus": "ttbar",
 
@@ -65,11 +71,11 @@ class Templates(template.templates.Templates):
             # use only allowed channels or all if None specified
             channels = set(channel_type.ChannelType.channel_types.keys())
             if use_channels:
-                channels &= use_channels
+                channels &= self._expand_channels(use_channels)
 
             # remove banned channels
             if ban_channels:
-                channels -= ban_channels
+                channels -= self._expand_channels(ban_channels)
 
             self.save_channels = list(channels)
         else:
