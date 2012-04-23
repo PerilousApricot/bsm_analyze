@@ -21,6 +21,7 @@
 #include "interface/Btag.h"
 #include "interface/Cut2DSelector.h"
 #include "interface/JetEnergyCorrections.h"
+#include "interface/JetEnergyResolution.h"
 #include "interface/MonitorCanvas.h"
 #include "interface/Pileup.h"
 #include "interface/TemplateAnalyzer.h"
@@ -42,6 +43,7 @@ int main(int argc, char *argv[])
         boost::shared_ptr<AppController> app(new AppController());
 
         boost::shared_ptr<JetEnergyCorrectionOptions> jec_options(new JetEnergyCorrectionOptions());
+        boost::shared_ptr<JetEnergyResolutionOptions> jer_options(new JetEnergyResolutionOptions());
         boost::shared_ptr<SynchSelectorOptions> synch_selector_options(new SynchSelectorOptions());
         boost::shared_ptr<Cut2DSelectorOptions> cut_2d_selector_options(new Cut2DSelectorOptions());
         boost::shared_ptr<TriggerOptions> trigger_options(new TriggerOptions());
@@ -50,6 +52,7 @@ int main(int argc, char *argv[])
         boost::shared_ptr<BtagOptions> btag_options(new BtagOptions());
 
         jec_options->setDelegate(analyzer->getJetEnergyCorrectionDelegate());
+        jer_options->setDelegate(analyzer->getJERDelegate());
         synch_selector_options->setDelegate(analyzer->getSynchSelectorDelegate());
         cut_2d_selector_options->setDelegate(analyzer->getCut2DSelectorDelegate());
         trigger_options->setDelegate(analyzer->getTriggerDelegate());
@@ -58,6 +61,7 @@ int main(int argc, char *argv[])
         btag_options->setDelegate(analyzer->getBtagDelegate());
 
         app->addOptions(*jec_options);
+        app->addOptions(*jer_options);
         app->addOptions(*synch_selector_options);
         app->addOptions(*cut_2d_selector_options);
         app->addOptions(*trigger_options);
@@ -132,6 +136,10 @@ int main(int argc, char *argv[])
             TH1Ptr mttbar_after_htlep = convert(*analyzer->mttbarAfterHtlep());
             mttbar_after_htlep->SetName("mttbar_after_htlep");
             mttbar_after_htlep->GetXaxis()->SetTitle("M_{t#bar{t}} [TeV/c^{2}]");
+
+            TH1Ptr normalization_mttbar = convert(*analyzer->normalization_mttbar());
+            normalization_mttbar->SetName("normalization_mttbar");
+            normalization_mttbar->GetXaxis()->SetTitle("M_{t#bar{t}} [TeV/c^{2}]");
 
             TH2Ptr dr_vs_ptrel = convert(*analyzer->drVsPtrel());
             dr_vs_ptrel->SetName("dr_vs_ptrel");
@@ -294,6 +302,7 @@ int main(int argc, char *argv[])
                 solutions->Write();
                 mttbar_before_htlep->Write();
                 mttbar_after_htlep->Write();
+                normalization_mttbar->Write();
                 dr_vs_ptrel->Write();
 
                 ttbar_pt->Write();
@@ -349,77 +358,6 @@ int main(int argc, char *argv[])
                 htop_fourth_jet->write(*analyzer->htopJet4(), app->output().get());
 
                 ltop_first_jet->write(*analyzer->ltopJet1(), app->output().get());
-            }
-
-            if (app->isInteractive())
-            {
-                shared_ptr<TCanvas> canvas(new TCanvas());
-                canvas->SetTitle("Mass/Htlep");
-                canvas->SetWindowSize(800, 600);
-                canvas->Divide(2, 2);
-
-                canvas->cd(1);
-                dr_vs_ptrel->Draw("colz");
-
-                canvas->cd(2);
-                htlep->Draw("h");
-
-                canvas->cd(3);
-                mttbar_before_htlep->Draw("h");
-
-                canvas->cd(4);
-                mttbar_after_htlep->Draw("h");
-
-                canvas->Update();
-
-                shared_ptr<TCanvas> canvas2(new TCanvas());
-                canvas2->SetTitle("Other");
-                canvas2->SetWindowSize(1200, 600);
-                canvas2->Divide(4, 2);
-
-                canvas2->cd(1);
-                d0->Draw("hist");
-
-                canvas2->cd(3);
-                njets->Draw("hist");
-
-                canvas2->cd(4);
-                ttbar_pt->Draw("hist");
-
-                canvas2->cd(5);
-                wlep_mt->Draw("hist");
-
-                canvas2->cd(6);
-                whad_mt->Draw("hist");
-
-                canvas2->cd(7);
-                wlep_mass->Draw("hist");
-
-                canvas2->cd(8);
-                whad_mass->Draw("hist");
-
-                shared_ptr<TCanvas> canvas3(new TCanvas());
-                canvas3->SetTitle("Primary Vertices");
-                canvas3->SetWindowSize(640, 400);
-                canvas3->Divide(2, 1);
-
-                canvas3->cd(1);
-                npv->Draw("hist");
-
-                canvas3->cd(2);
-                npv_with_pileup->Draw("hist");
-
-                first_jet->draw(*analyzer->firstJet());
-                second_jet->draw(*analyzer->secondJet());
-                third_jet->draw(*analyzer->thirdJet());
-
-                electron->draw(*analyzer->electron());
-                electron_before_tricut->draw(*analyzer->electronBeforeTricut());
-
-                ltop->draw(*analyzer->ltop());
-                htop->draw(*analyzer->htop());
-
-                root->Run();
             }
         }
     }

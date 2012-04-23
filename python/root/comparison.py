@@ -27,8 +27,8 @@ def compare(function):
         axis.SetTitleOffset(1.2)
 
         axis = ratio.GetYaxis()
-        axis.SetTitleSize(0.08)
-        axis.SetTitleOffset(0.9)
+        axis.SetTitleSize(0.1)
+        axis.SetTitleOffset(0.7)
         axis.SetNdivisions(4)
         axis.SetRangeUser(-1, 1)
 

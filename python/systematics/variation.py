@@ -40,14 +40,9 @@ def main():
                 help = ("Systematics type to be loaded: jes, pileup, "
                         "matching, scaling"))
 
-        parser.add_option(
-                "--suffix",
-                action="store",
-                help="Suffix for canvases to be stored")
-
         options, args = parser.parse_args()
 
-        from systematics.comparator import Comparator
+        from systematics.scale import Comparator
         
         app = Comparator(options, args)
         app.run()

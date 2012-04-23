@@ -14,7 +14,7 @@ from channel_style import ChannelStyle
 from root.error import StatError
 
 class MCChannelStatError(StatError):
-    mc_channels = set(["ttbar", "zjets", "wjets", "stop"])
+    mc_channels = set(["ttbar", "ttbar_powheg", "zjets", "wb", "wc", "wlight", "wjets", "stop"])
 
     def __init__(self, percent):
         StatError.__init__(self, percent)
@@ -181,7 +181,7 @@ class ChannelTemplate(ChannelType, ChannelStyle, Template):
 
 class MCChannelTemplate(ChannelTemplate):
     channel_types = {
-            "mc": ["stop", "zjets", "wjets", "ttbar"]
+            "mc": ["stop", "zjets", "wb", "wc", "wlight", "wjets", "ttbar"]
             }
 
     channel_styles = {

@@ -42,7 +42,7 @@ class InputTemplate(InputType, Template, InputInfo):
         Luminosity, aka amount of processed data
         '''
 
-        return 4328.472
+        return 4367.39
 
     @property
     def scale(self):
@@ -92,12 +92,15 @@ class InputTemplate(InputType, Template, InputInfo):
                     self.hist.GetXaxis().SetTitle(info.title +
                             ((" [" + info.units + "]") if info.units else ""))
 
-            if info.units:
-                if 1 == self.dimension:
-                    self.hist.GetYaxis().SetTitle(
-                            "event yield / {bin_width:.1f} {units}".format(
-                                bin_width = self.hist.GetBinWidth(1),
-                                units = info.units))
+            if 1 == self.dimension:
+                if info.units:
+                    format_string = "event yield / {bin_width:.1f} {units}"
+                else:
+                    format_string = "event yield / {bin_width:.1f}"
+
+                self.hist.GetYaxis().SetTitle(format_string.format(
+                            bin_width = self.hist.GetBinWidth(1),
+                            units = info.units))
             
     def __str__(self):
         '''

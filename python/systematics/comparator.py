@@ -18,7 +18,7 @@ import ROOT
 
 class Comparator(object):
     channels = set([
-        "ttbar", "zjets", "wjets", "stop",
+        "ttbar", "zjets", "wb", "wc", "wlight", "wjets", "stop",
         "zprime_m1000_w10",
         "zprime_m1500_w15",
         "zprime_m2000_w20",
@@ -68,6 +68,11 @@ class Comparator(object):
         else:
             self.use_channels = self.channels
 
+        if options.suffix:
+            self._canvas_template = "{0}_" + options.suffix + ".pdf"
+        else:
+            self._canvas_template = "{0}.pdf"
+
         self.loader = None
 
     def run(self):
@@ -82,7 +87,16 @@ class Comparator(object):
             print()
 
         self._load()
-        self._plot()
+        canvases = self._plot()
+
+        # Save canvases
+        for obj in canvases:
+            canvas = obj.canvas.canvas
+            canvas.SaveAs(self._canvas_template.format(
+                canvas.GetName()))
+
+        if canvases and not self._batch_mode:
+            raw_input('enter')
 
     def _load(self):
         if self._verbose:
@@ -90,8 +104,11 @@ class Comparator(object):
 
         loader = {
                 "jes": SystematicLoader,
+                "jer": SystematicLoader,
                 "pileup": SystematicLoader,
-                "scaling": ScalingSystematicLoader,
+                "btageff": SystematicLoader,
+                "bmistag": SystematicLoader,
+                "scale": ScalingSystematicLoader,
                 "matching": MatchingSystematicLoader
                 }.get(self._systematic)
 
@@ -135,17 +152,17 @@ class Comparator(object):
                 self.style(systematics)
 
                 max_y = 0
-                for channel in (systematics.nominal,
+                for channel_ in (systematics.nominal,
                                 systematics.plus,
                                 systematics.minus):
-                    if not channel:
+                    if not channel_:
                         continue
 
                     if not obj.axis_hist:
-                        obj.axis_hist = channel.hist.Clone()
+                        obj.axis_hist = channel_.hist.Clone()
 
-                    channel_max_y = channel.hist.GetBinContent(
-                            channel.hist.GetMaximumBin())
+                    channel_max_y = channel_.hist.GetBinContent(
+                            channel_.hist.GetMaximumBin())
 
                     if channel_max_y > max_y:
                         max_y = channel_max_y
@@ -184,6 +201,8 @@ class Comparator(object):
                                 title="#frac{minus}{nominal}"))
 
                 obj.canvas = ComparisonCanvas(len(obj.ratios) + 1)
+                obj.canvas.canvas.SetName(channel + "_" +
+                                          plot.replace("/", "_"))
                 canvas = obj.canvas.canvas
 
                 canvas.cd(1)
@@ -209,8 +228,7 @@ class Comparator(object):
 
                 containers.append(obj)
 
-        if containers and  not self._batch_mode:
-            raw_input('enter')
+        return containers
 
     def style(self, systematics):
         for channel in systematics.nominal, systematics.plus, systematics.minus:

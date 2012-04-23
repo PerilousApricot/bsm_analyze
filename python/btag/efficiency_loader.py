@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
 '''
-Created by Samvel Khalatyan, Mar 13, 2012
+Created by Samvel Khalatyan, Apr 05, 2012
 Copyright 2011, All rights reserved
 '''
 
 from util.timer import Timer
 from template.loader import ChannelTemplateLoader
-
 
 class Systematics(object):
     def __init__(self):
@@ -91,8 +90,8 @@ class SystematicLoader(object):
                 systematics.__dict__[systematic] = channel
 
 class ScalingSystematicLoader(SystematicLoader):
-    channels = set(["ttbar", "ttbar_scale_plus", "ttbar_scale_minus",
-                    "wjets", "wjets_scale_plus", "wjets_scale_minus"])
+    channels = set(["ttbar", "ttbar_scaling_plus", "ttbar_scaling_minus",
+                    "wjets", "wjets_scaling_plus", "wjets_scaling_minus"])
 
     def __init__(self,
                  input_filename,

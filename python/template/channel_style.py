@@ -19,7 +19,11 @@ class ChannelStyle(BaseStyle):
     # represent style objects to be applied to histograms.
     channel_styles = {
             "ttbar": Style(ROOT.kRed + 1),
+            "ttbar_powheg": Style(ROOT.kRed + 2),
             "zjets": Style(ROOT.kBlue + 1),
+            "wb": Style(ROOT.kGreen + 3),
+            "wc": Style(ROOT.kGreen + 2),
+            "wlight": Style(ROOT.kGreen + 1),
             "wjets": Style(ROOT.kGreen + 1),
             "stop": Style(ROOT.kMagenta + 1),
 
@@ -27,21 +31,36 @@ class ChannelStyle(BaseStyle):
 
             "qcd": Style(ROOT.kYellow + 1),
 
+            # Narrow resonances
             "zprime_m1000_w10": Style(line_style = 1, fill_style = 0),
             "zprime_m1500_w15": Style(line_style = 2, fill_style = 0),
             "zprime_m2000_w20": Style(line_style = 3, fill_style = 0),
             "zprime_m3000_w30": Style(line_style = 7, fill_style = 0),
-            "zprime_m4000_w40": Style(line_style = 9, fill_style = 0),
+            #"zprime_m4000_w40": Style(line_style = 9, fill_style = 0),
+
+            # Wide resonances
+            "zprime_m1000_w100": Style(line_style = 1, fill_style = 0),
+            "zprime_m1500_w150": Style(line_style = 2, fill_style = 0),
+            "zprime_m2000_w200": Style(line_style = 3, fill_style = 0),
+            "zprime_m3000_w300": Style(line_style = 7, fill_style = 0),
+            #"zprime_m4000_w400": Style(line_style = 9, fill_style = 0),
+
+            # RSGluon
+            "rsgluon_m1000": Style(line_style = 1, fill_style = 0),
+            "rsgluon_m1500": Style(line_style = 2, fill_style = 0),
+            "rsgluon_m2000": Style(line_style = 3, fill_style = 0),
+            "rsgluon_m2500": Style(line_style = 3, fill_style = 0),
+            "rsgluon_m3000": Style(line_style = 7, fill_style = 0),
 
             # Systematic channels
-            "ttbar_scaling_plus": Style(ROOT.kRed + 1),
-            "ttbar_scaling_minus": Style(ROOT.kRed + 1),
+            "ttbar_scale_plus": Style(ROOT.kRed + 1),
+            "ttbar_scale_minus": Style(ROOT.kRed + 1),
 
             "ttbar_matching_plus": Style(ROOT.kRed + 1),
             "ttbar_matching_minus": Style(ROOT.kRed + 1),
 
-            "wjets_scaling_plus": Style(ROOT.kRed + 1),
-            "wjets_scaling_minus": Style(ROOT.kRed + 1),
+            "wjets_scale_plus": Style(ROOT.kRed + 1),
+            "wjets_scale_minus": Style(ROOT.kRed + 1),
 
             "wjets_matching_plus": Style(ROOT.kRed + 1),
             "wjets_matching_minus": Style(ROOT.kRed + 1) }

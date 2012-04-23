@@ -112,6 +112,7 @@ class AppController:
                 os.mkdir(folder)
 
             print("{0:<20}".format(folder), end = " ... ")
+            sys.stdout.flush()
             self.pushd(folder)
 
             if not os.path.exists("input.txt"):
@@ -119,13 +120,16 @@ class AppController:
 
             self.makeLinks()
 
-            print("run")
+            print("run", end=" ... ")
+            sys.stdout.flush()
             self.runCommand(args)
 
             self.popd()
 
             if self.config.max_process <= len(self.process):
                 self.waitOneProcess()
+
+            print("done")
 
     def runCommand(self, command):
         suffix = ""

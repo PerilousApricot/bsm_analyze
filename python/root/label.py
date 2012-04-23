@@ -108,7 +108,8 @@ class LuminosityLabel(Label):
     '''
 
     def __init__(self, luminosity):
-        Label.__init__(self, [.70, .91, 1, .96])
-        self.label = ("L = {0:.2f}".format(luminosity / 1000) +
+        Label.__init__(self, [.65, .91, 1, .96])
+
+        self.label = ("L = {0:.1f}".format(luminosity / 1000) +
                         " fb^{-1}, e+jets")
-        self.label.SetTextSize(.03)
+        #self.label.SetTextSize(.03)

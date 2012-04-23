@@ -106,6 +106,10 @@ namespace bsm
     class BtagDelegate;
     class BtagOptions;
     class Btag;
+
+    class JetEnergyResolutionDelegate;
+    class JetEnergyResolutionOptions;
+    class JetEnergyResolution;
 }
 
 #endif

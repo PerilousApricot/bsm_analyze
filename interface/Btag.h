@@ -6,7 +6,7 @@
 #ifndef BTAG_H
 #define BTAG_H
 
-#include <boost/random.hpp>
+#include <vector>
 
 #include "bsm_core/interface/Object.h"
 #include "interface/bsm_fwd.h"
@@ -20,20 +20,20 @@ namespace bsm
         public:
             enum Systematic
             {
-                DOWN = -1,
                 NONE = 0,
-                UP = 1
+                DOWN,
+                UP
             };
 
             virtual ~BtagDelegate()
             {
             }
 
-            virtual void setUseBtagSF()
+            virtual void setBtagSystematic(const Systematic &)
             {
             }
 
-            virtual void setSystematic(const Systematic &)
+            virtual void setMistagSystematic(const Systematic &)
             {
             }
     };
@@ -50,39 +50,135 @@ namespace bsm
             virtual DescriptionPtr description() const;
 
         private:
-            void setUseBtagSF();
-            void setSystematic(const BtagDelegate::Systematic &);
+            void setBtagSystematic(const BtagDelegate::Systematic &);
+            void setMistagSystematic(const BtagDelegate::Systematic &);
 
             DescriptionPtr _description;
+    };
+
+    class BtagFunction
+    {
+        public:
+            BtagFunction();
+
+            virtual ~BtagFunction()
+            {
+            };
+
+            virtual float value(const float &x) const = 0;
+            virtual float value_plus(const float &x) const = 0;
+            virtual float value_minus(const float &x) const = 0;
+
+        protected:
+            const uint32_t find_bin(const float &jet_pt) const;
+
+        private:
+            std::vector<float> _bins;
+    };
+
+    class BtagScale: public BtagFunction
+    {
+        // CSVT operating point
+        public:
+            BtagScale();
+
+            virtual float value(const float &jet_pt) const;
+            virtual float value_plus(const float &jet_pt) const
+            {
+                return value(jet_pt) + error(jet_pt);
+            }
+
+            virtual float value_minus(const float &jet_pt) const
+            {
+                const float value_ = value(jet_pt) - error(jet_pt);
+
+                return value_ > 0 ? value_ : 0;
+            }
+
+        protected:
+            virtual float error(const float &jet_pt) const;
+
+        private:
+            std::vector<float> _errors;
+    };
+
+    class CtagScale: public BtagScale
+    {
+        protected:
+            virtual float error(const float &jet_pt) const;
+    };
+
+    class LightScale: public BtagFunction
+    {
+        public:
+            virtual float value(const float &jet_pt) const;
+            virtual float value_plus(const float &jet_pt) const;
+            virtual float value_minus(const float &jet_pt) const;
+
+        private:
+            float value_max(const float &jet_pt) const;
+            float value_min(const float &jet_pt) const;
+    };
+
+    class BtagEfficiency: public BtagFunction
+    {
+        // Errors are not provided ... yet
+        public:
+            BtagEfficiency();
+
+            virtual float value(const float &jet_pt) const;
+            virtual float value_plus(const float &jet_pt) const
+            {
+                return value(jet_pt);
+            }
+
+            virtual float value_minus(const float &jet_pt) const
+            {
+                return value(jet_pt);
+            }
+
+        private:
+            std::vector<float> _values;
+    };
+
+    class CtagEfficiency: public BtagEfficiency
+    {
+    };
+
+    class LightEfficiency: public BtagEfficiency
+    {
+        // Errors are not provided ... yet
+        public:
+            LightEfficiency();
+
+            virtual float value(const float &jet_pt) const;
+
+        private:
+            std::vector<float> _values;
+    };
+
+    class LightEfficiencyData: public BtagEfficiency
+    {
+        // Errors are not provided ... yet
+        public:
+            virtual float value(const float &jet_pt) const;
     };
 
     class Btag: public core::Object,
                 public BtagDelegate
     {
         public:
+            typedef std::pair<bool, const float> Info;
+
             Btag();
             Btag(const Btag &);
 
-            static float discriminator();
-
-            static float btag_efficiency(const float &discriminator);
-            static float btag_scale(const float &discriminator);
-
-            static float mistag_efficiency(const float &jet_pt);
-            static float mistag_scale(const float &jet_pt);
-            static float mistag_scale_sigma_up(const float &jet_pt);
-            static float mistag_scale_sigma_down(const float &jet_pt);
-
-            float btag_scale_with_systematic(const float &discriminator,
-                                             const float &uncertainty);
-            float mistag_scale_with_systematic(const float &jet_pt);
-
-            bool is_tagged(const CorrectedJet &jet);
+            Info is_tagged(const CorrectedJet &jet);
 
             // BtagDelegate interface
             //
-            virtual void setUseBtagSF();
-            virtual void setSystematic(const Systematic &);
+            virtual void setBtagSystematic(const Systematic &);
+            virtual void setMistagSystematic(const Systematic &);
 
             // Object interface
             //
@@ -91,19 +187,37 @@ namespace bsm
             virtual void print(std::ostream &) const;
 
         private:
+            typedef boost::shared_ptr<BtagFunction> BtagFunctionPtr;
+
             // Prevent copying
             //
             Btag &operator =(const Btag &);
 
-            bool correct(const bool &is_tagged,
-                         const float &scale,
-                         const float &efficiency);
+            float scale(const bool &is_tagged,
+                        const float &jet_pt,
+                        const BtagFunctionPtr &sf,
+                        const BtagFunctionPtr &eff,
+                        const Systematic &sytematic);
 
-            boost::shared_ptr<boost::mt19937> _generator;
+            float scale_data(const bool &is_tagged,
+                             const float &jet_pt,
+                             const BtagFunctionPtr &sf,
+                             const BtagFunctionPtr &eff,
+                             const Systematic &sytematic);
 
-            Systematic _systematic;
+            Systematic _btag_systematic;
+            Systematic _mistag_systematic;
 
-            bool _use_sf;
+            const float _discriminator;
+
+            BtagFunctionPtr _scale_btag;
+            BtagFunctionPtr _eff_btag;
+
+            BtagFunctionPtr _scale_ctag;
+            BtagFunctionPtr _eff_ctag;
+
+            BtagFunctionPtr _scale_light;
+            BtagFunctionPtr _eff_light;
     };
 }
 

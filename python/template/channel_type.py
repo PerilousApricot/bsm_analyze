@@ -19,7 +19,12 @@ class ChannelType(BaseType):
     # Input type may be added to Channel type
     channel_types = {
             "ttbar": ["ttbar"],
+            "ttbar_powheg": ["ttbar_powheg"],
             "zjets": ["zjets"],
+
+            "wb": ["wb"],
+            "wc": ["wc"],
+            "wlight": ["wlight"],
             "wjets": ["wjets"],
 
             "stop": [x for x in InputType.input_types.keys()
@@ -30,22 +35,37 @@ class ChannelType(BaseType):
 
             "qcd": ["qcd_from_data"],
 
+            # narrow resonances
             "zprime_m1000_w10": ["zprime_m1000_w10"],
             "zprime_m1500_w15": ["zprime_m1500_w15"],
             "zprime_m2000_w20": ["zprime_m2000_w20"],
             "zprime_m3000_w30": ["zprime_m3000_w30"],
-            "zprime_m4000_w40": ["zprime_m4000_w40"],
+            #"zprime_m4000_w40": ["zprime_m4000_w40"],
+
+            # wide resonances
+            "zprime_m1000_w100": ["zprime_m1000_w100"],
+            "zprime_m1500_w150": ["zprime_m1500_w150"],
+            "zprime_m2000_w200": ["zprime_m2000_w200"],
+            "zprime_m3000_w300": ["zprime_m3000_w300"],
+            #"zprime_m4000_w400": ["zprime_m4000_w400"],
+
+            # rsgluons
+            "rsgluon_m1000": ["rsgluon_m1000"],
+            "rsgluon_m1500": ["rsgluon_m1500"],
+            "rsgluon_m2000": ["rsgluon_m2000"],
+            "rsgluon_m2500": ["rsgluon_m2500"],
+            "rsgluon_m3000": ["rsgluon_m3000"],
 
             # Systematic channels
             "ttbar_matching_plus": ["ttbar_matching_plus"],
             "ttbar_matching_minus": ["ttbar_matching_minus"],
-            "ttbar_scaling_plus": ["ttbar_scaling_plus"],
-            "ttbar_scaling_minus": ["ttbar_scaling_minus"],
+            "ttbar_scale_plus": ["ttbar_scale_plus"],
+            "ttbar_scale_minus": ["ttbar_scale_minus"],
 
             "wjets_matching_plus": ["wjets_matching_plus"],
             "wjets_matching_minus": ["wjets_matching_minus"],
-            "wjets_scaling_plus": ["wjets_scaling_plus"],
-            "wjets_scaling_minus": ["wjets_scaling_minus"] }
+            "wjets_scale_plus": ["wjets_scale_plus"],
+            "wjets_scale_minus": ["wjets_scale_minus"] }
 
     def __init__(self, channel_type):
         '''
@@ -112,9 +132,11 @@ if "__main__" == __name__:
             input_type = ChannelType("zprime_m3000_w30")
             self.assertEqual(input_type.type, "zprime_m3000_w30")
 
+        '''
         def test_zprime_m4000_w40(self):
             input_type = ChannelType("zprime_m4000_w40")
             self.assertEqual(input_type.type, "zprime_m4000_w40")
+        '''
 
         def test_qcd(self):
             input_type = ChannelType("qcd")

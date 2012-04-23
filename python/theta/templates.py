@@ -19,28 +19,39 @@ class Templates(template.templates.Templates):
 
             "ttbar": "ttbar",
             "zjets": "zjets",
-            "wjets": "wjets",
+            "wb": "wb",
+            "wc": "wc",
+            "wlight": "wlight",
             "stop": "singletop",
             "qcd": "eleqcd",
             "data": "DATA",
 
+            # narrow resonances
             "zprime_m1000_w10": "zp1000",
             "zprime_m1500_w15": "zp1500",
             "zprime_m2000_w20": "zp2000",
             "zprime_m3000_w30": "zp3000",
             "zprime_m4000_w40": "zp4000",
 
+            # wide resonances
+            "zprime_m1000_w100": "zp1000wide",
+            "zprime_m1500_w150": "zp1500wide",
+            "zprime_m2000_w200": "zp2000wide",
+            "zprime_m3000_w300": "zp3000wide",
+            "zprime_m4000_w400": "zp4000wide",
+
+            # rsgluon
+            "rsgluon_m1000": "rsg1000",
+            "rsgluon_m1500": "rsg1500",
+            "rsgluon_m2000": "rsg2000",
+            "rsgluon_m3000": "rsg3000",
+            "rsgluon_m4000": "rsg4000",
+
             "ttbar_matching_plus": "ttbar",
             "ttbar_matching_minus": "ttbar",
 
-            "ttbar_scaling_plus": "ttbar",
-            "ttbar_scaling_minus": "ttbar",
-
-            "wjets_matching_plus": "wjets",
-            "wjets_matching_minus": "wjets",
-
-            "wjets_scaling_plus": "wjets",
-            "wjets_scaling_minus": "wjets",
+            "ttbar_scale_plus": "ttbar",
+            "ttbar_scale_minus": "ttbar",
     }
 
     def __init__(self, options, args):
@@ -48,7 +59,7 @@ class Templates(template.templates.Templates):
                 self,
                 options, args,
                 disable_systematics=False if (options.systematic and
-                                              ("scaling" in options.systematic or
+                                              ("scale" in options.systematic or
                                                "matching" in options.systematic))
                                           else True)
 
@@ -69,11 +80,11 @@ class Templates(template.templates.Templates):
             # use only allowed channels or all if None specified
             channels = set(channel_type.ChannelType.channel_types.keys())
             if use_channels:
-                channels &= use_channels
+                channels &= self._expand_channels(use_channels)
 
             # remove banned channels
             if ban_channels:
-                channels -= ban_channels
+                channels -= self._expand_channels(ban_channels)
 
             self.save_channels = list(channels)
         else:
@@ -111,36 +122,31 @@ class Templates(template.templates.Templates):
 
         '''
 
-        # Make sure required plot is loaded
-        channels = self.loader.plots.get("/mttbar_after_htlep")
-        if not channels:
-            raise RuntimeError("mttbar_after_htlep is not loaded")
-
-        # format string has different format with(-out) systematics
-        format_string = str(self.theta_prefix) + "_mttbar__{channel}"
-        if self.suffix:
-            format_string += self.suffix
-
         with topen(self.output_filename, "update"):
-            # save only those channels that are supported or specified by user
-            for channel_type, channel in channels.items():
-                if (channel_type not in self.channel_names or
-                        (self.save_channels and
-                         channel_type not in self.save_channels)):
+            for plot_name, channels in self.loader.plots.items():
+                plot_name = plot_name[1:].replace('/', '_')
 
-                    continue
+                # format string has different format with(-out) systematics
+                format_string = str(self.theta_prefix) + "_{plot}__{channel}"
+                if self.suffix:
+                    format_string += self.suffix
 
-                # All Zprimes are originally normalized to 5pb. Scale to 1pb
-                if channel_type.startswith("zprime"):
-                    channel.hist.Scale(1. / 5)
+                # save only those channels that are supported or specified by user
+                for channel_type, channel in channels.items():
+                    if (channel_type not in self.channel_names or
+                            (self.save_channels and
+                             channel_type not in self.save_channels)):
 
-                name = format_string.format(
-                        channel=self.channel_names[channel_type])
+                        continue
 
-                hist = channel.hist.Clone(name)
-                hist.SetTitle(channel.hist.GetTitle())
+                    name = format_string.format(
+                            plot="mttbar" if "mttbar_after_htlep" == plot_name else plot_name,
+                            channel=self.channel_names[channel_type])
 
-                hist.Write(name)
+                    hist = channel.hist.Clone(name)
+                    hist.SetTitle(channel.hist.GetTitle())
+
+                    hist.Write(name)
 
     def __str__(self):
         '''
