@@ -212,12 +212,16 @@ def plot(expected_limits, observed_limits):
     cms_legend.SetTextSize(0.035)
     cms_legend.Draw("9")
 
-    lumi_legend = TLatex(0.2, 0.92, "L = 4.33 fb^{-1}, e+jets")
+    lumi_legend = TLatex(0.2, 0.92, "L = {0}".format({
+        "mu": "5.0 fb^{-1}, #mu+jets",
+        "combo": "5.0 fb^{-1}, e+jets, #mu+jets"
+        }.get(sys.argv[1] if 1 < len(sys.argv) else None,
+              "4.4 fb^{-1}, e+jets")))
     lumi_legend.SetNDC()
     lumi_legend.SetTextSize(0.035)
     lumi_legend.Draw("9")
 
-    method_legend = TLatex(0.2, 0.85, "{0} method".format("Bayesian" if sys.argv[1:].count("bayes") else "CLs"))
+    method_legend = TLatex(0.2, 0.85, "CLs method")
     method_legend.SetNDC()
     method_legend.SetTextSize(0.035)
     method_legend.Draw("9")
