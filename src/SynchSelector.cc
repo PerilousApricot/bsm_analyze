@@ -83,6 +83,11 @@ SynchSelectorOptions::SynchSelectorOptions()
              boost::bind(&SynchSelectorOptions::setChi2Discriminator, this, _1)),
          "set max chi2 disriminator")
 
+        ("invert-chi2",
+         po::value<bool>()->implicit_value(false)->notifier(
+             boost::bind(&SynchSelectorOptions::setInvertChi2, this, _1)),
+         "invert chi2 cut")
+
         ("wflavor",
          po::value<string>()->notifier(
              boost::bind(&SynchSelectorOptions::setWflavor, this, _1)),
@@ -210,6 +215,14 @@ void SynchSelectorOptions::setChi2Discriminator(const float &value)
         throw runtime_error("negative chi2 cut is not allowed");
 
     delegate()->setChi2Discriminator(value);
+}
+
+void SynchSelectorOptions::setInvertChi2(const bool &value)
+{
+    if (!delegate())
+        return;
+
+    delegate()->setInvertChi2(value);
 }
 
 void SynchSelectorOptions::setWflavor(std::string mode)
@@ -684,6 +697,14 @@ void SynchSelector::setChi2Discriminator(const float &value)
 {
     chi2()->setValue(value);
     chi2()->enable();
+}
+
+void SynchSelector::setInvertChi2(const bool &do_invert)
+{
+    if (do_invert)
+        chi2()->invert();
+    else
+        chi2()->noinvert();
 }
 
 void SynchSelector::setWflavor(const Wflavor &flavor)

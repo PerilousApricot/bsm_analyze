@@ -62,6 +62,7 @@ namespace bsm
 
             virtual void setLtopPt(const float &) {}
             virtual void setChi2Discriminator(const float &) {}
+            virtual void setInvertChi2(const bool &) {}
 
             virtual void setWflavor(const Wflavor &) {}
     };
@@ -88,6 +89,7 @@ namespace bsm
             void setQCDTemplate(const bool &);
             void setLtopPt(const float &);
             void setChi2Discriminator(const float &);
+            void setInvertChi2(const bool &);
             void setWflavor(std::string);
 
             DescriptionPtr _description;
@@ -201,6 +203,7 @@ namespace bsm
 
             virtual void setLtopPt(const float &);
             virtual void setChi2Discriminator(const float &);
+            virtual void setInvertChi2(const bool &);
 
             virtual void setWflavor(const Wflavor &);
 

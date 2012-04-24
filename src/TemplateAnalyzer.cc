@@ -509,6 +509,9 @@ TemplateAnalyzer::TemplateAnalyzer():
     _htop_chi2.reset(new H1Proxy(400, 0, 40));
     monitor(_htop_chi2);
 
+    _btag.reset(new H1Proxy(100, 0, 10));
+    monitor(_btag);
+
     _first_jet.reset(new P4Monitor());
     _second_jet.reset(new P4Monitor());
     _third_jet.reset(new P4Monitor());
@@ -749,6 +752,9 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
 
     _htop_chi2 = dynamic_pointer_cast<H1Proxy>(object._htop_chi2->clone());
     monitor(_htop_chi2);
+
+    _btag = dynamic_pointer_cast<H1Proxy>(object._btag->clone());
+    monitor(_btag);
 
     _first_jet =
         dynamic_pointer_cast<P4Monitor>(object._first_jet->clone());
@@ -1121,6 +1127,11 @@ const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htop_chi2() const
     return _htop_chi2->histogram();
 }
 
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::btag() const
+{
+    return _btag->histogram();
+}
+
 const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::firstJet() const
 {
     return _first_jet;
@@ -1348,6 +1359,8 @@ void TemplateAnalyzer::process(const Event *event)
             _event_weight->set(*_event_weight *
                                _synch_selector->countBtaggedJets().second);
         }
+
+        fill_btag();
 
         njetsBeforeReconstruction()->fill(_synch_selector->goodJets().size(),
                                           *_event_weight);
@@ -1813,4 +1826,28 @@ void TemplateAnalyzer::invalidate_cache()
 {
     _event_weight->invalidate();
     _event_weight_inverted_htlep->invalidate();
+}
+
+void TemplateAnalyzer::fill_btag()
+{
+    typedef SynchSelector::GoodJets GoodJets;
+    typedef ::google::protobuf::RepeatedPtrField<Jet::BTag> BTags;
+
+    const GoodJets &good_jets = _synch_selector->goodJets();
+    for(GoodJets::const_iterator jet = good_jets.begin();
+            good_jets.end() != jet;
+            ++jet)
+    {
+        for(BTags::const_iterator jet_btag = jet->jet->btag().begin();
+                jet->jet->btag().end() != jet_btag;
+                ++jet_btag)
+        {
+            if (Jet::BTag::CSV == jet_btag->type())
+            {
+                btag()->fill(jet_btag->discriminator());
+
+                break;
+            }
+        }
+    }
 }
