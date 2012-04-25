@@ -75,6 +75,11 @@ def parser():
             action="store_true", default=False,
             help = "Generate plots in Log scale")
 
+    parser.add_option(
+            "--label",
+            action="store",
+            help = "Add label to the plots, e.g.: channel name")
+
     return parser
 
 def main():

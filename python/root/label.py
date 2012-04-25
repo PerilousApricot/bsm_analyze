@@ -112,4 +112,3 @@ class LuminosityLabel(Label):
 
         self.label = ("L = {0:.1f}".format(luminosity / 1000) +
                         " fb^{-1}, e+jets")
-        #self.label.SetTextSize(.03)

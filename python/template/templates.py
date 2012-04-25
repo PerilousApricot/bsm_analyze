@@ -24,6 +24,16 @@ from scales import Scales
 from util.arg import split_use_and_ban
 from util.timer import Timer
 
+class ChannelLabel(root.label.Label):
+    '''
+    Label with chanenel type, e.g.: 0-btag, 1+btag, etc.
+    '''
+
+    def __init__(self, label_):
+        root.label.Label.__init__(self, [.25, .81, .88, .86])
+
+        self.label = label_
+
 class Templates(object):
     # Map channel-type to meaningful name for histogram Legend
     channel_names = {
@@ -137,6 +147,14 @@ class Templates(object):
             self._canvas_template = "{0}_" + options.suffix + ".pdf"
         else:
             self._canvas_template = "{0}.pdf"
+
+        if options.label:
+            self._label = options.label
+        else:
+            self._label = {
+                    "0btag": "N_{btags} = 0",
+                    "1btag": "N_{btags} #geq 1"
+                    }.get(options.suffix, None)
 
         # Absolute scales for specific channels
         self._scales = []
@@ -603,7 +621,7 @@ class Templates(object):
             # extract Data
             data = channels.get("data")
 
-            obj.legend = ROOT.TLegend(.7, .55, .88, .88)
+            obj.legend = ROOT.TLegend(.7, .50, .88, .88)
             obj.legend.SetMargin(0.12);
             obj.legend.SetTextSize(0.03);
             obj.legend.SetFillColor(10);
@@ -630,9 +648,20 @@ class Templates(object):
 
             bg_order = ["qcd"] + (mc_combo.allowed_inputs if mc_combo else [])
             bg_channels = set(channels.keys()) & set(bg_order)
+            print("bg order:", bg_order)
 
             # Add channels in order: QCD + channel_type["mc"]
             for channel_type in bg_order:
+                if channel_type in bg_channels:
+                    hist = channels[channel_type].hist
+
+                    if not obj.bg_stack:
+                        obj.bg_stack = ROOT.THStack()
+
+                    obj.bg_stack.Add(hist)
+
+            # Add channels in order: QCD + channel_type["mc"]
+            for channel_type in reversed(bg_order):
                 if channel_type in bg_channels:
                     hist = channels[channel_type].hist
 
@@ -641,13 +670,8 @@ class Templates(object):
                                               "unknown"),
                             "fe")
 
-                    if not obj.bg_stack:
-                        obj.bg_stack = ROOT.THStack()
-
-                    obj.bg_stack.Add(hist)
-
             # Adjust y-Maximum to be drawn
-            max_y = 1.2 * max(
+            max_y = 1.3 * max(
                 (h.GetBinContent(h.GetMaximumBin()) +
                  h.GetBinError(h.GetMaximumBin())) if h else 0
 
@@ -768,6 +792,9 @@ class Templates(object):
                     root.label.CMSLabel(),
                     root.label.LuminosityLabel(InputTemplate.luminosity())
                         if data else root.label.CMSSimulationLabel()]
+
+            if self._label:
+                obj.labels.append(ChannelLabel(self._label))
 
             # draw signals
             for channel_type, channel in channels.items():
