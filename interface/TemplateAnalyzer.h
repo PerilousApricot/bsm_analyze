@@ -262,6 +262,8 @@ namespace bsm
             const H1Ptr ltop_chi2() const;
             const H1Ptr htop_chi2() const;
 
+            const H1Ptr btag() const;
+
             const P4MonitorPtr firstJet() const;
             const P4MonitorPtr secondJet() const;
             const P4MonitorPtr thirdJet() const;
@@ -327,6 +329,8 @@ namespace bsm
 
             void invalidate_cache();
 
+            void fill_btag();
+
             boost::shared_ptr<SynchSelector> _synch_selector;
             boost::shared_ptr<SynchSelector> _synch_selector_with_inverted_htlep;
 
@@ -377,6 +381,8 @@ namespace bsm
             H1ProxyPtr _chi2;
             H1ProxyPtr _htop_chi2;
             H1ProxyPtr _ltop_chi2;
+
+            H1ProxyPtr _btag;
 
             H1ProxyPtr _normalization_mttbar;
 

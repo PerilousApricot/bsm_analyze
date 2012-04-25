@@ -164,6 +164,9 @@ int main(int argc, char *argv[])
             TH1Ptr htop_chi2 = convert(*analyzer->htop_chi2());
             htop_chi2->SetName("htop_chi2");
 
+            TH1Ptr btag = convert(*analyzer->btag());
+            btag->SetName("btag");
+
             TH1Ptr ttbar_pt = convert(*analyzer->ttbarPt());
             ttbar_pt->SetName("ttbar_pt");
             ttbar_pt->GetXaxis()->SetTitle("p_{T}^{t#bar{t}} [GeV/c]");
@@ -320,6 +323,8 @@ int main(int argc, char *argv[])
                 chi2->Write();
                 ltop_chi2->Write();
                 htop_chi2->Write();
+
+                btag->Write();
 
                 ljet_met_dphi_vs_met_before_tricut->Write();
                 lepton_met_dphi_vs_met_before_tricut->Write();
