@@ -64,8 +64,11 @@ class Templates(template.templates.Templates):
                                           else True)
 
         if options.systematic:
+            systematic = options.systematic[:-1]
             self.suffix = "__{0}__{1}".format(
-                    options.systematic[:-1],
+                    systematic + "_ttbar"
+                        if "scale" == systematic or "matching" == systematic
+                        else systematic, 
                     "plus" if options.systematic.endswith("+") else "minus")
         else:
             self.suffix = None

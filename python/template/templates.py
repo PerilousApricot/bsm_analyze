@@ -34,7 +34,7 @@ class Templates(object):
             "wc": "W#rightarrowl#nu (+cX)",
             "wlight": "W#rightarrowl#nu (+light)",
             "wjets": "W#rightarrowl#nu",
-            "ttbar": "t#bar{t}",
+            "ttbar": "QCD t#bar{t}",
             "ttbar_powheg": "t#bar{t} [POWHEG]",
             "mc": "Total MC",
 

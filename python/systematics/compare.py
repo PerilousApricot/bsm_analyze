@@ -8,48 +8,29 @@ Copyright 2011, All rights reserved
 from __future__ import print_function
 
 import sys
-from optparse import OptionParser
+import template.main
+
+def parser():
+    parser = template.main.parser()
+
+    parser.remove_option("--plots")
+    parser.remove_option("--folders")
+
+    parser.add_option(
+            "--systematic",
+            action = "store",
+            help = ("Systematics type to be loaded: jes, pileup, "
+                    "matching, scaling"))
+
+    return parser
 
 def main():
     try:
-        parser = OptionParser(usage = "usage: %prog [options]")
+        options, args = parser().parse_args()
 
-        parser.add_option(
-                "-b", "--batch",
-                action = "store_true", default = False,
-                help = "Run application in batch mode")
-
-        parser.add_option(
-                "-v", "--verbose",
-                action = "store_true", default = False,
-                help = "Print additional info")
-
-        parser.add_option(
-                "--filename",
-                action = "store", default = "output_signal_p150_hlt.root",
-                help = "input filename")
-
-        parser.add_option(
-                "--channels",
-                action = "store",
-                help = "Load only comma separated channels")
-
-        parser.add_option(
-                "--systematic",
-                action = "store",
-                help = ("Systematics type to be loaded: jes, pileup, "
-                        "matching, scaling"))
-
-        parser.add_option(
-                "--suffix",
-                action="store",
-                help="Suffix for canvases to be stored")
-
-        options, args = parser.parse_args()
-
-        from systematics.comparator import Comparator
+        import comparator
         
-        app = Comparator(options, args)
+        app = comparator.Comparator(options, args)
         app.run()
 
     except RuntimeError as error:

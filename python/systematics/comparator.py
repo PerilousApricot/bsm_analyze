@@ -16,24 +16,29 @@ from systematics.loader import SystematicLoader,ScalingSystematicLoader,Matching
 from util.arg import split_use_and_ban
 import ROOT
 
-class Comparator(object):
+class Comparator(Templates):
     channels = set([
         "ttbar", "zjets", "wb", "wc", "wlight", "wjets", "stop",
         "zprime_m1000_w10",
         "zprime_m1500_w15",
         "zprime_m2000_w20",
-        "zprime_m3000_w30"
+        "zprime_m3000_w30",
+
+        "zprime_m1000_w100",
+        "zprime_m1500_w150",
+        "zprime_m2000_w200",
+        "zprime_m3000_w300",
+
+        "rsgluon_m1000",
+        "rsgluon_m1500",
+        "rsgluon_m2000",
+        "rsgluon_m3000",
     ])
 
     channel_names = Templates.channel_names
 
     def __init__(self, options, args):
-        self._batch_mode = options.batch
-        self._verbose = options.verbose
-
-        self._input_filename = options.filename
-
-        self.use_channels = []
+        Templates.__init__(self, options, args)
 
         self._systematic = options.systematic
         if self._systematic:
@@ -50,30 +55,6 @@ class Comparator(object):
 
         if not self._systematic:
             raise RuntimeError("systematic is not specified")
-
-        if options.channels:
-            use_channels, ban_channels = split_use_and_ban(set(
-                channel.strip() for channel in options.channels.split(',')))
-
-            # use only allowed channels or all if None specified
-            channels = self.channels
-            if use_channels:
-                channels &= use_channels
-
-            # remove banned channels
-            if ban_channels:
-                channels -= ban_channels
-
-            self.use_channels = list(channels)
-        else:
-            self.use_channels = self.channels
-
-        if options.suffix:
-            self._canvas_template = "{0}_" + options.suffix + ".pdf"
-        else:
-            self._canvas_template = "{0}.pdf"
-
-        self.loader = None
 
     def run(self):
         # Apply TDR style to all plots
