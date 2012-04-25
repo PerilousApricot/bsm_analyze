@@ -75,6 +75,21 @@ GenMatchingAnalyzer::GenMatchingAnalyzer()
     _htop->pt()->mutable_axis()->init(1000, 0, 1000);
     monitor(_htop);
 
+    _htop_1jet.reset(new P4Monitor());
+    _htop_1jet->mt()->mutable_axis()->init(1000, 0, 1000);
+    _htop_1jet->pt()->mutable_axis()->init(1000, 0, 1000);
+    monitor(_htop_1jet);
+
+    _htop_2jet.reset(new P4Monitor());
+    _htop_2jet->mt()->mutable_axis()->init(1000, 0, 1000);
+    _htop_2jet->pt()->mutable_axis()->init(1000, 0, 1000);
+    monitor(_htop_2jet);
+
+    _htop_3jet.reset(new P4Monitor());
+    _htop_3jet->mt()->mutable_axis()->init(1000, 0, 1000);
+    _htop_3jet->pt()->mutable_axis()->init(1000, 0, 1000);
+    monitor(_htop_3jet);
+
     _ttbar.reset(new P4Monitor());
     _ttbar->mass()->mutable_axis()->init(4000, 0, 4000);
     monitor(_ttbar);
@@ -117,6 +132,15 @@ GenMatchingAnalyzer::GenMatchingAnalyzer(const GenMatchingAnalyzer &object)
     _htop = dynamic_pointer_cast<P4Monitor>(object._htop->clone());
     monitor(_htop);
 
+    _htop_1jet = dynamic_pointer_cast<P4Monitor>(object._htop_1jet->clone());
+    monitor(_htop_1jet);
+
+    _htop_2jet = dynamic_pointer_cast<P4Monitor>(object._htop_2jet->clone());
+    monitor(_htop_2jet);
+
+    _htop_3jet = dynamic_pointer_cast<P4Monitor>(object._htop_3jet->clone());
+    monitor(_htop_3jet);
+
     _ttbar = dynamic_pointer_cast<P4Monitor>(object._ttbar->clone());
     monitor(_ttbar);
 
@@ -152,6 +176,21 @@ const GenMatchingAnalyzer::P4MonitorPtr GenMatchingAnalyzer::ltop() const
 const GenMatchingAnalyzer::P4MonitorPtr GenMatchingAnalyzer::htop() const
 {
     return _htop;
+}
+
+const GenMatchingAnalyzer::P4MonitorPtr GenMatchingAnalyzer::htop_1jet() const
+{
+    return _htop_1jet;
+}
+
+const GenMatchingAnalyzer::P4MonitorPtr GenMatchingAnalyzer::htop_2jet() const
+{
+    return _htop_2jet;
+}
+
+const GenMatchingAnalyzer::P4MonitorPtr GenMatchingAnalyzer::htop_3jet() const
+{
+    return _htop_3jet;
 }
 
 const GenMatchingAnalyzer::P4MonitorPtr GenMatchingAnalyzer::ttbar() const
@@ -274,6 +313,23 @@ void GenMatchingAnalyzer::process(const Event *event)
 
                 htop_p4 += *matched_jet->jet->corrected_p4;
                 used_jets.push_back(matched_jet->jet);
+            }
+
+            // cout << "htop jets: " << used_jets.size() << endl;
+
+            switch(used_jets.size())
+            {
+                case 0: cerr << "htop does not have jets assigned" << endl;
+                        break;
+
+                case 1: htop_1jet()->fill(htop_p4);
+                        break;
+
+                case 2: htop_2jet()->fill(htop_p4);
+                        break;
+
+                default: htop_3jet()->fill(htop_p4);
+                         break;
             }
 
             ltop_drsum()->fill(dr(ltop_p4, el_p4) +

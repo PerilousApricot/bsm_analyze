@@ -86,6 +86,9 @@ int main(int argc, char *argv[])
 
             shared_ptr<P4Canvas> ltop(new P4Canvas("ltop", "ltop"));
             shared_ptr<P4Canvas> htop(new P4Canvas("htop", "htop"));
+            shared_ptr<P4Canvas> htop_1jet(new P4Canvas("htop_1jet", "htop_1jet"));
+            shared_ptr<P4Canvas> htop_2jet(new P4Canvas("htop_2jet", "htop_2jet"));
+            shared_ptr<P4Canvas> htop_3jet(new P4Canvas("htop_3jet", "htop_3jet"));
 
             shared_ptr<P4Canvas> ttbar(new P4Canvas("ttbar", "ttbar"));
 
@@ -99,6 +102,10 @@ int main(int argc, char *argv[])
 
                 ltop->write(*analyzer->ltop(), app->output().get());
                 htop->write(*analyzer->htop(), app->output().get());
+
+                htop_1jet->write(*analyzer->htop_1jet(), app->output().get());
+                htop_2jet->write(*analyzer->htop_2jet(), app->output().get());
+                htop_3jet->write(*analyzer->htop_3jet(), app->output().get());
 
                 ttbar->write(*analyzer->ttbar(), app->output().get());
             }
