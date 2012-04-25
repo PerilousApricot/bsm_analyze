@@ -111,6 +111,10 @@ namespace bsm
             const P4MonitorPtr ltop() const;
             const P4MonitorPtr htop() const;
 
+            const P4MonitorPtr htop_1jet() const;
+            const P4MonitorPtr htop_2jet() const;
+            const P4MonitorPtr htop_3jet() const;
+
             const P4MonitorPtr ttbar() const;
 
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
@@ -152,6 +156,10 @@ namespace bsm
             P4MonitorPtr _ltop;
             P4MonitorPtr _htop;
             P4MonitorPtr _ttbar;
+
+            P4MonitorPtr _htop_1jet;
+            P4MonitorPtr _htop_2jet;
+            P4MonitorPtr _htop_3jet;
 
             SynchSelector::CutPtr _ejets_channel;
     };
