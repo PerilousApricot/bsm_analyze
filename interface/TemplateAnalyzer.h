@@ -264,14 +264,16 @@ namespace bsm
 
             const H1Ptr btag() const;
 
-            const P4MonitorPtr firstJet() const;
-            const P4MonitorPtr secondJet() const;
-            const P4MonitorPtr thirdJet() const;
+            const P4MonitorPtr jet1() const;
+            const P4MonitorPtr jet2() const;
+            const P4MonitorPtr jet3() const;
             const P4MonitorPtr electron() const;
             const P4MonitorPtr electronBeforeTricut() const;
 
             const P4MonitorPtr ltop() const;
             const P4MonitorPtr htop() const;
+            const P4MonitorPtr htop_1jets() const;
+            const P4MonitorPtr htop_2jets() const;
 
             const P4MonitorPtr htopJet1() const;
             const P4MonitorPtr htopJet2() const;
@@ -396,14 +398,16 @@ namespace bsm
             bool _wjets_input;
             bool _apply_wjet_correction;
 
-            P4MonitorPtr _first_jet;
-            P4MonitorPtr _second_jet;
-            P4MonitorPtr _third_jet;
+            P4MonitorPtr _jet1;
+            P4MonitorPtr _jet2;
+            P4MonitorPtr _jet3;
             P4MonitorPtr _electron;
             P4MonitorPtr _electron_before_tricut;
 
             P4MonitorPtr _ltop;
             P4MonitorPtr _htop;
+            P4MonitorPtr _htop_1jets;
+            P4MonitorPtr _htop_2jets;
 
             P4MonitorPtr _htop_jet1;
             P4MonitorPtr _htop_jet2;

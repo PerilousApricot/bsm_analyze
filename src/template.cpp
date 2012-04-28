@@ -243,14 +243,16 @@ int main(int argc, char *argv[])
             htop_pt_vs_ltop_pt->GetXaxis()->SetTitle("p_{T}^{ltop} [GeV/c]");
             htop_pt_vs_ltop_pt->GetYaxis()->SetTitle("p_{T}^{htop} [GeV/c]");
 
-            shared_ptr<P4Canvas> first_jet(new P4Canvas("First jet", "jet1"));
-            shared_ptr<P4Canvas> second_jet(new P4Canvas("Second jet", "jet2"));
-            shared_ptr<P4Canvas> third_jet(new P4Canvas("Third jet", "jet3"));
+            shared_ptr<P4Canvas> jet1(new P4Canvas("jet1", "jet1"));
+            shared_ptr<P4Canvas> jet2(new P4Canvas("jet2", "jet2"));
+            shared_ptr<P4Canvas> jet3(new P4Canvas("jet3", "jet3"));
             shared_ptr<P4Canvas> electron(new P4Canvas("Electron", "e"));
             shared_ptr<P4Canvas> electron_before_tricut(new P4Canvas("Electron Before Tricut", "e_no_tricut"));
 
             shared_ptr<P4Canvas> ltop(new P4Canvas("ltop", "ltop"));
             shared_ptr<P4Canvas> htop(new P4Canvas("htop", "htop"));
+            shared_ptr<P4Canvas> htop_1jets(new P4Canvas("htop_1jets", "htop_1jets"));
+            shared_ptr<P4Canvas> htop_2jets(new P4Canvas("htop_2jets", "htop_2jets"));
 
             shared_ptr<P4Canvas> htop_first_jet(new P4Canvas("htop jet1", "htop_jet1"));
             shared_ptr<P4Canvas> htop_second_jet(new P4Canvas("htop jet2", "htop_jet2"));
@@ -346,9 +348,9 @@ int main(int argc, char *argv[])
                 njet2_dr_lepton_jet1_after_reconstruction->Write();
                 njet2_dr_lepton_jet2_after_reconstruction->Write();
 
-                first_jet->write(*analyzer->firstJet(), app->output().get());
-                second_jet->write(*analyzer->secondJet(), app->output().get());
-                third_jet->write(*analyzer->thirdJet(), app->output().get());
+                jet1->write(*analyzer->jet1(), app->output().get());
+                jet2->write(*analyzer->jet2(), app->output().get());
+                jet3->write(*analyzer->jet3(), app->output().get());
 
                 electron->write(*analyzer->electron(), app->output().get());
                 electron_before_tricut->write(*analyzer->electronBeforeTricut(),
@@ -356,6 +358,8 @@ int main(int argc, char *argv[])
 
                 ltop->write(*analyzer->ltop(), app->output().get());
                 htop->write(*analyzer->htop(), app->output().get());
+                htop_1jets->write(*analyzer->htop_1jets(), app->output().get());
+                htop_2jets->write(*analyzer->htop_2jets(), app->output().get());
 
                 htop_first_jet->write(*analyzer->htopJet1(), app->output().get());
                 htop_second_jet->write(*analyzer->htopJet2(), app->output().get());
