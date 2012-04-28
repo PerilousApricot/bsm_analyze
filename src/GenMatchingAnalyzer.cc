@@ -21,6 +21,7 @@
 #include "bsm_input/interface/Physics.pb.h"
 #include "bsm_stat/interface/H1.h"
 #include "bsm_stat/interface/H2.h"
+#include "interface/Algorithm.h"
 #include "interface/CorrectedJet.h"
 #include "interface/Cut.h"
 #include "interface/Monitor.h"
@@ -34,7 +35,12 @@ using namespace bsm;
 
 // -- GenMatching Analyzer -------------------------------------------------------
 //
-GenMatchingAnalyzer::GenMatchingAnalyzer()
+GenMatchingAnalyzer::GenMatchingAnalyzer():
+    _matching_events(0),
+    _ltop_match(0),
+    _htop_match(0),
+    _reconstructions_match(0),
+    _p4_reconstructions_match(0)
 {
     _synch_selector.reset(new SynchSelector());
     _synch_selector->htlep()->disable();
@@ -96,9 +102,17 @@ GenMatchingAnalyzer::GenMatchingAnalyzer()
 
     _ejets_channel.reset(new Comparator<logical_and<bool> >(true));
     monitor(_ejets_channel);
+
+    _reconstructor.reset(new SimpleResonanceReconstructor());
+    monitor(_reconstructor);
 }
 
-GenMatchingAnalyzer::GenMatchingAnalyzer(const GenMatchingAnalyzer &object)
+GenMatchingAnalyzer::GenMatchingAnalyzer(const GenMatchingAnalyzer &object):
+    _matching_events(0),
+    _ltop_match(0),
+    _htop_match(0),
+    _reconstructions_match(0),
+    _p4_reconstructions_match(0)
 {
     _synch_selector = 
         dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
@@ -146,6 +160,10 @@ GenMatchingAnalyzer::GenMatchingAnalyzer(const GenMatchingAnalyzer &object)
 
     _ejets_channel = dynamic_pointer_cast<Cut>(object._ejets_channel->clone());
     monitor(_ejets_channel);
+
+    _reconstructor = 
+        dynamic_pointer_cast<ResonanceReconstructor>(object._reconstructor->clone());
+    monitor(_reconstructor);
 }
 
 const GenMatchingAnalyzer::H1Ptr GenMatchingAnalyzer::cutflow() const
@@ -219,6 +237,20 @@ bsm::BtagDelegate *GenMatchingAnalyzer::getBtagDelegate() const
     return _synch_selector->getBtagDelegate();
 }
 
+void GenMatchingAnalyzer::setChi2Reconstruction(const Chi2Discriminators &ltop,
+                                                const Chi2Discriminators &htop)
+{
+    stopMonitor(_reconstructor);
+
+    Chi2ResonanceReconstructor *reco = new Chi2ResonanceReconstructor();
+    reco->setLtopDiscriminators(ltop);
+    reco->setHtopDiscriminators(htop);
+
+    _reconstructor.reset(reco);
+
+    monitor(_reconstructor);
+}
+
 void GenMatchingAnalyzer::didCounterAdd(const Counter *counter)
 {
     if (_counters.end() != _counters.find(counter))
@@ -259,6 +291,18 @@ void GenMatchingAnalyzer::process(const Event *event)
         {
             const LorentzVector &el_p4 =
                 _synch_selector->goodElectrons()[0]->physics_object().p4();
+
+            const Mttbar reco_resonance =
+                _reconstructor->run(el_p4,
+                                    *_synch_selector->goodMET(),
+                                    _synch_selector->goodJets());
+
+            /*
+            if (reco_resonance.valid &&
+                _synch_selector->ltop(pt(reco_resonance.ltop)) &&
+                _synch_selector->chi2(reco_resonance.ltop_discriminator +
+                                      reco_resonance.htop_discriminator))
+            */
 
             // Pick the best neutrino
             //
@@ -363,6 +407,40 @@ void GenMatchingAnalyzer::process(const Event *event)
             htop()->fill(htop_p4);
 
             ttbar()->fill(htop_p4 + ltop_p4);
+
+            // make sure all w-boson partons were matched to jets
+            //
+            bool matched = true;
+            for(vector<gen::MatchedJet>::const_iterator matched_jet =
+                        resonance.htop.wboson.jets.begin();
+                    resonance.htop.wboson.jets.end() != matched_jet;
+                    ++matched_jet)
+            {
+                if (!matched_jet->jet)
+                {
+                    matched = false;
+
+                    break;
+                }
+            }
+
+            if (matched
+                    && reco_resonance.valid
+                    && resonance.ltop.jets.begin()->jet
+                    && resonance.htop.jets.begin()->jet
+                    && _synch_selector->ltop(pt(reco_resonance.ltop))
+                    && _synch_selector->chi2(reco_resonance.ltop_discriminator +
+                                             reco_resonance.htop_discriminator))
+            {
+                ++_matching_events;
+
+                if (is_match(resonance, reco_resonance))
+                    ++_reconstructions_match;
+
+                if (reco_resonance.htop == htop_p4 &&
+                    reco_resonance.ltop == ltop_p4)
+                    ++_p4_reconstructions_match;
+            }
         }
     }
 }
@@ -395,6 +473,12 @@ void GenMatchingAnalyzer::merge(const ObjectPtr &pointer)
     for(uint32_t cut = 0; SynchSelector::SELECTIONS < cut; ++cut)
         _synch_selector->cutflow()->cut(cut)->events().get()->setDelegate(0);
 
+    _matching_events += object->_matching_events;
+    _ltop_match += object->_ltop_match;
+    _htop_match += object->_htop_match;
+    _reconstructions_match += object->_reconstructions_match;
+    _p4_reconstructions_match += object->_p4_reconstructions_match;
+
     Object::merge(pointer);
 }
 
@@ -404,6 +488,84 @@ void GenMatchingAnalyzer::print(std::ostream &out) const
 
     _ejets_channel->setName("e+jets gen channel");
     out << *_ejets_channel << endl;
+
+    out << endl;
+    out << "matching events: " << _matching_events << endl;
+    out << "     ltop match: " << _ltop_match << endl;
+    out << "     htop match: " << _htop_match << endl;
+    out << " gen match reco: " << _reconstructions_match << endl;
+    out << "       fraction: "
+        << (1000 * _reconstructions_match / _matching_events) / 10.
+        << " %" << endl;
+    out << endl;
+    out << " gen match reco: " << _p4_reconstructions_match << endl;
+    out << "       fraction: "
+        << (1000 * _p4_reconstructions_match / _matching_events) / 10.
+        << " %" << endl;
+}
+
+// Private
+//
+bool GenMatchingAnalyzer::is_match(const gen::TTbar &gen, const Mttbar &reco)
+{
+    typedef ResonanceReconstructor::CorrectedJets CorrectedJets;
+
+    // Test ltop
+    //
+    bool ltop_match = (!gen.ltop.jets.empty() &&       // Make sure there is gen info
+                    !reco.ltop_jets.empty() &&      // Make sure ltop was recoed
+                    gen.ltop.jets.begin()->jet &&   // parton was matched with jet
+                    reco.ltop_jets.begin()->jet == gen.ltop.jets.begin()->jet->jet);
+
+    if (ltop_match)
+        ++_ltop_match;
+
+    // Test htop
+    //
+    bool htop_match = (!gen.htop.jets.empty() &&
+                       !reco.htop_jets.empty() &&
+                       gen.htop.jets.begin()->jet &&
+                       reco.htop_jets.begin()->jet ==
+                           gen.htop.jets.begin()->jet->jet);
+
+    uint32_t matched_jets = (htop_match ? 1 : 0);
+    for(vector<gen::MatchedJet>::const_iterator matched_jet =
+                gen.htop.wboson.jets.begin();
+            htop_match && gen.htop.wboson.jets.end() != matched_jet;
+            ++matched_jet)
+    {
+        if (!matched_jet->jet)
+        {
+            htop_match &= false;
+
+            continue;
+        }
+
+        // make sure the jet is present in the reco htop jets
+        //
+        bool found = false;
+        for(CorrectedJets::const_iterator reco_jet = reco.htop_jets.begin();
+                reco.htop_jets.end() != reco_jet;
+                ++reco_jet)
+        {
+            if (reco_jet->jet == matched_jet->jet->jet)
+            {
+                found = true;
+                ++matched_jets;
+
+                break;
+            }
+        }
+
+        htop_match &= found;
+    }
+
+    htop_match &= (matched_jets == reco.htop_jets.size());
+
+    if (htop_match)
+        ++_htop_match;
+
+    return ltop_match && htop_match;
 }
 
 

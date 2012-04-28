@@ -21,6 +21,7 @@
 #include "interface/Cut.h"
 #include "interface/DecayGenerator.h"
 #include "interface/SynchSelector.h"
+#include "interface/TemplateAnalyzer.h"
 #include "interface/bsm_fwd.h"
 
 namespace bsm
@@ -92,7 +93,8 @@ namespace bsm
     }
 
     class GenMatchingAnalyzer: public Analyzer,
-                               public CounterDelegate
+                               public CounterDelegate,
+                               public TemplatesDelegate
     {
         public:
             typedef boost::shared_ptr<stat::H1> H1Ptr;
@@ -122,6 +124,11 @@ namespace bsm
             TriggerDelegate *getTriggerDelegate() const;
             BtagDelegate *getBtagDelegate() const;
 
+            // Templates Delegate interface
+            //
+            virtual void setChi2Reconstruction(const Chi2Discriminators &ltop,
+                                               const Chi2Discriminators &htop);
+
             // Counter Delegate interface
             //
             virtual void didCounterAdd(const Counter *);
@@ -140,6 +147,9 @@ namespace bsm
 
         private:
             typedef boost::shared_ptr<H1Proxy> H1ProxyPtr;
+            typedef ResonanceReconstructor::Mttbar Mttbar;
+
+            bool is_match(const gen::TTbar &gen, const Mttbar &reco);
 
             boost::shared_ptr<SynchSelector> _synch_selector;
 
@@ -162,6 +172,13 @@ namespace bsm
             P4MonitorPtr _htop_3jet;
 
             SynchSelector::CutPtr _ejets_channel;
+            boost::shared_ptr<ResonanceReconstructor> _reconstructor;
+
+            uint32_t _matching_events;
+            uint32_t _ltop_match;
+            uint32_t _htop_match;
+            uint32_t _reconstructions_match;
+            uint32_t _p4_reconstructions_match;
     };
 }
 
