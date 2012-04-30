@@ -24,6 +24,7 @@
 #include "interface/MonitorCanvas.h"
 #include "interface/Pileup.h"
 #include "interface/GenMatchingAnalyzer.h"
+#include "interface/TemplateAnalyzer.h"
 #include "interface/TriggerAnalyzer.h"
 #include "interface/SynchSelector.h"
 
@@ -45,16 +46,19 @@ int main(int argc, char *argv[])
         boost::shared_ptr<SynchSelectorOptions> synch_selector_options(new SynchSelectorOptions());
         boost::shared_ptr<TriggerOptions> trigger_options(new TriggerOptions());
         boost::shared_ptr<BtagOptions> btag_options(new BtagOptions());
+        boost::shared_ptr<TemplatesOptions> templates_options(new TemplatesOptions());
 
         jec_options->setDelegate(analyzer->getJetEnergyCorrectionDelegate());
         synch_selector_options->setDelegate(analyzer->getSynchSelectorDelegate());
         trigger_options->setDelegate(analyzer->getTriggerDelegate());
         btag_options->setDelegate(analyzer->getBtagDelegate());
+        templates_options->setDelegate(analyzer.get());
 
         app->addOptions(*jec_options);
         app->addOptions(*synch_selector_options);
         app->addOptions(*trigger_options);
         app->addOptions(*btag_options);
+        app->addOptions(*templates_options);
 
         app->setAnalyzer(analyzer);
 

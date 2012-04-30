@@ -512,9 +512,9 @@ TemplateAnalyzer::TemplateAnalyzer():
     _btag.reset(new H1Proxy(100, 0, 10));
     monitor(_btag);
 
-    _first_jet.reset(new P4Monitor());
-    _second_jet.reset(new P4Monitor());
-    _third_jet.reset(new P4Monitor());
+    _jet1.reset(new P4Monitor());
+    _jet2.reset(new P4Monitor());
+    _jet3.reset(new P4Monitor());
     _electron.reset(new P4Monitor());
     _electron_before_tricut.reset(new P4Monitor());
 
@@ -526,14 +526,24 @@ TemplateAnalyzer::TemplateAnalyzer():
     _htop->mt()->mutable_axis()->init(1000, 0, 1000);
     _htop->pt()->mutable_axis()->init(1000, 0, 1000);
 
-    monitor(_first_jet);
-    monitor(_second_jet);
-    monitor(_third_jet);
+    _htop_1jets.reset(new P4Monitor());
+    _htop_1jets->mt()->mutable_axis()->init(1000, 0, 1000);
+    _htop_1jets->pt()->mutable_axis()->init(1000, 0, 1000);
+
+    _htop_2jets.reset(new P4Monitor());
+    _htop_2jets->mt()->mutable_axis()->init(1000, 0, 1000);
+    _htop_2jets->pt()->mutable_axis()->init(1000, 0, 1000);
+
+    monitor(_jet1);
+    monitor(_jet2);
+    monitor(_jet3);
     monitor(_electron);
     monitor(_electron_before_tricut);
 
     monitor(_ltop);
     monitor(_htop);
+    monitor(_htop_1jets);
+    monitor(_htop_2jets);
 
     _htop_jet1.reset(new P4Monitor());
     _htop_jet1->mass()->mutable_axis()->init(250, 0, 250);
@@ -756,14 +766,14 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     _btag = dynamic_pointer_cast<H1Proxy>(object._btag->clone());
     monitor(_btag);
 
-    _first_jet =
-        dynamic_pointer_cast<P4Monitor>(object._first_jet->clone());
+    _jet1 =
+        dynamic_pointer_cast<P4Monitor>(object._jet1->clone());
 
-    _second_jet =
-        dynamic_pointer_cast<P4Monitor>(object._second_jet->clone());
+    _jet2 =
+        dynamic_pointer_cast<P4Monitor>(object._jet2->clone());
 
-    _third_jet =
-        dynamic_pointer_cast<P4Monitor>(object._third_jet->clone());
+    _jet3 =
+        dynamic_pointer_cast<P4Monitor>(object._jet3->clone());
 
     _electron =
         dynamic_pointer_cast<P4Monitor>(object._electron->clone());
@@ -777,14 +787,22 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     _htop =
         dynamic_pointer_cast<P4Monitor>(object._htop->clone());
 
-    monitor(_first_jet);
-    monitor(_second_jet);
-    monitor(_third_jet);
+    _htop_1jets =
+        dynamic_pointer_cast<P4Monitor>(object._htop_1jets->clone());
+
+    _htop_2jets =
+        dynamic_pointer_cast<P4Monitor>(object._htop_2jets->clone());
+
+    monitor(_jet1);
+    monitor(_jet2);
+    monitor(_jet3);
     monitor(_electron);
     monitor(_electron_before_tricut);
 
     monitor(_ltop);
     monitor(_htop);
+    monitor(_htop_1jets);
+    monitor(_htop_2jets);
 
     _htop_jet1 = dynamic_pointer_cast<P4Monitor>(object._htop_jet1->clone());
     _htop_jet2 = dynamic_pointer_cast<P4Monitor>(object._htop_jet2->clone());
@@ -1132,19 +1150,19 @@ const TemplateAnalyzer::H1Ptr TemplateAnalyzer::btag() const
     return _btag->histogram();
 }
 
-const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::firstJet() const
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::jet1() const
 {
-    return _first_jet;
+    return _jet1;
 }
 
-const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::secondJet() const
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::jet2() const
 {
-    return _second_jet;
+    return _jet2;
 }
 
-const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::thirdJet() const
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::jet3() const
 {
-    return _third_jet;
+    return _jet3;
 }
 
 const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::electron() const
@@ -1165,6 +1183,16 @@ const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::ltop() const
 const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::htop() const
 {
     return _htop;
+}
+
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::htop_1jets() const
+{
+    return _htop_1jets;
+}
+
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::htop_2jets() const
+{
+    return _htop_2jets;
 }
 
 const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::htopJet1() const
@@ -1409,6 +1437,15 @@ void TemplateAnalyzer::process(const Event *event)
                     }
 
                     htop_drsum()->fill(drsum, *_event_weight);
+                }
+
+                switch(resonance.htop_jets.size())
+                {
+                    case 1: htop_1jets()->fill(resonance.htop, *_event_weight);
+                            break;
+
+                    default: htop_2jets()->fill(resonance.htop, *_event_weight);
+                             break;
                 }
 
                 htop_dphi()->fill(dphi(resonance.htop, resonance.ltop),
@@ -1693,16 +1730,16 @@ TemplateAnalyzer::Mttbar TemplateAnalyzer::mttbar() const
 void TemplateAnalyzer::monitorJets()
 {
     if (_synch_selector->goodJets().size())
-        _first_jet->fill(*_synch_selector->goodJets()[0].corrected_p4,
-                *_event_weight);
+        jet1()->fill(*_synch_selector->goodJets()[0].corrected_p4,
+                     *_event_weight);
 
     if (1 < _synch_selector->goodJets().size())
-        _second_jet->fill(*_synch_selector->goodJets()[1].corrected_p4,
-                *_event_weight);
+        jet2()->fill(*_synch_selector->goodJets()[1].corrected_p4,
+                     *_event_weight);
 
     if (2 < _synch_selector->goodJets().size())
-        _third_jet->fill(*_synch_selector->goodJets()[2].corrected_p4,
-                *_event_weight);
+        jet3()->fill(*_synch_selector->goodJets()[2].corrected_p4,
+                     *_event_weight);
 }
 
 
