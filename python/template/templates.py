@@ -151,10 +151,15 @@ class Templates(object):
         if options.label:
             self._label = options.label
         else:
-            self._label = {
-                    "0btag": "N_{btags} = 0",
-                    "1btag": "N_{btags} #geq 1"
-                    }.get(options.suffix, None)
+            if options.btag:
+                self._label = {
+                        "0btag": "N_{btags} = 0",
+                        "1btag": "N_{btags} #geq 1"
+                        }.get(options.btag, None)
+            else:
+                self._label = None
+
+        self._btag = options.btag
 
         # Absolute scales for specific channels
         self._scales = []
@@ -193,13 +198,15 @@ class Templates(object):
         # Use ratio in the comparison plot
         ratio = options.ratio.lower()
         if ratio:
-            if "/" in ratio:
+            if "none" == ratio:
+                self._ratio = "none"
+            elif "/" in ratio:
                 self._ratio = ratio.split('/')
             else:
                 self._ratio = None
 
                 print("only simple ratios are supported: channel/channel",
-                        file = sys.stderr)
+                      file = sys.stderr)
         else:
             self._ratio = None
 
@@ -298,7 +305,10 @@ class Templates(object):
             print("{0:-<80}".format("-- Load Channels "))
 
         # Create and configure new loader
-        self.loader = ChannelTemplateLoader(self._input_filename)
+        self.loader = ChannelTemplateLoader(
+                self._input_filename,
+                error={"0btag": 21,
+                       "1btag": 14}.get(self._btag, 21))
 
         self.loader.use_plots = self.use_plots
         self.loader.ban_plots = self.ban_plots
@@ -522,14 +532,14 @@ class Templates(object):
                     for channel_type in loaded_mc_channels:
                         channels[channel_type].hist.Scale(mc_scale)
 
-                    if self._verbose and "/mttbar_after_htlep" == plot:
+                    if self._verbose:
                         if "qcd" in self.use_channels:
-                            print(" mttbar scales",
+                            print(" {0} scales".format(plot),
                                   " MC: {0:.2f}".format(mc_scale),
                                   "QCD: {0:.2f}".format(qcd_scale),
                                   "", sep = "\n")
                         else:
-                            print(" mttbar scales",
+                            print(" {0} scales".format(plot),
                                   " MC: {0:.2f}".format(mc_scale),
                                   "", sep = "\n")
 
@@ -621,7 +631,11 @@ class Templates(object):
             # extract Data
             data = channels.get("data")
 
-            obj.legend = ROOT.TLegend(.7, .50, .88, .88)
+            if "none" == self._ratio:
+                obj.legend = ROOT.TLegend(.65, .50, .88, .88)
+            else:
+                obj.legend = ROOT.TLegend(.7, .50, .88, .88)
+
             obj.legend.SetMargin(0.12);
             obj.legend.SetTextSize(0.03);
             obj.legend.SetFillColor(10);
@@ -648,7 +662,6 @@ class Templates(object):
 
             bg_order = ["qcd"] + (mc_combo.allowed_inputs if mc_combo else [])
             bg_channels = set(channels.keys()) & set(bg_order)
-            print("bg order:", bg_order)
 
             # Add channels in order: QCD + channel_type["mc"]
             for channel_type in bg_order:
@@ -657,6 +670,9 @@ class Templates(object):
 
                     if not obj.bg_stack:
                         obj.bg_stack = ROOT.THStack()
+
+                    clone = hist.Clone()
+                    clone.SetLineWidth(0)
 
                     obj.bg_stack.Add(hist)
 
@@ -682,7 +698,7 @@ class Templates(object):
                                  name.startswith("rsgluon"))] if h)
 
             # take care of ratio
-            if self._ratio:
+            if self._ratio and self._ratio != "none":
                 try:
                     # make sure specified channels are available
                     ratio = []
@@ -722,12 +738,12 @@ class Templates(object):
                     print("ratio error: {0}".format(error))
 
                     obj.canvas = ROOT.TCanvas()
-                    obj.canvas.SetWindowSize(640, 640)
+                    obj.canvas.SetWindowSize(640, 560)
                     pad = obj.canvas.cd(1)
                     pad.SetRightMargin(5)
                     pad.SetBottomMargin(0.15)
                 
-            elif data and obj.bg_combo:
+            elif data and obj.bg_combo and self._ratio != "none":
                 # Prepare comparison canvas: top pad plots, bottom - ratio
                 obj.canvas_obj = ComparisonCanvas()
                 obj.canvas = obj.canvas_obj.canvas
@@ -745,7 +761,7 @@ class Templates(object):
 
             else:
                 obj.canvas = ROOT.TCanvas()
-                obj.canvas.SetWindowSize(640, 640)
+                obj.canvas.SetWindowSize(640, 560)
                 pad = obj.canvas.cd(1)
                 pad.SetRightMargin(5)
                 pad.SetBottomMargin(0.15)
@@ -769,8 +785,13 @@ class Templates(object):
                         break
 
             obj.axis_hist.Reset()
+            obj.axis_hist.SetLineWidth(1)
             for axis in ROOT.TH1.GetXaxis, ROOT.TH1.GetYaxis:
                 axis(obj.axis_hist).SetLabelSize(0.04)
+                axis(obj.axis_hist).SetAxisColor(ROOT.kBlack)
+
+            if "chi2" in plot_name and False:
+                obj.axis_hist.GetXaxis().SetRangeUser(0, 21)
 
             obj.axis_hist.Draw("9")
 
@@ -787,11 +808,18 @@ class Templates(object):
                 data.hist.Draw("9 same")
 
             obj.axis_hist.SetMaximum(max_y)
+            obj.axis_hist.Draw("9 same")
 
-            obj.labels = [
-                    root.label.CMSLabel(),
-                    root.label.LuminosityLabel(InputTemplate.luminosity())
-                        if data else root.label.CMSSimulationLabel()]
+            if "none" == self._ratio:
+                obj.labels = [
+                        root.label.CMSLabel(text_size=0.033),
+                        root.label.LuminosityLabel(InputTemplate.luminosity(), text_size=0.033)
+                            if data else root.label.CMSSimulationLabel(text_size=0.033)]
+            else:
+                obj.labels = [
+                        root.label.CMSLabel(),
+                        root.label.LuminosityLabel(InputTemplate.luminosity())
+                            if data else root.label.CMSSimulationLabel()]
 
             if self._label:
                 obj.labels.append(ChannelLabel(self._label))
@@ -805,6 +833,12 @@ class Templates(object):
                             self.channel_names.get(channel_type, "unknown signal"),
                             "l")
                     channel.hist.Draw("9 hist same")
+
+                    print("{0} S: {s:.1f} B: {b:.1f} S/B: {r:.3f}".format(
+                         channel_type,
+                         s=channel.hist.Integral(),
+                         b=obj.bg_combo.Integral(),
+                         r=channel.hist.Integral() / obj.bg_combo.Integral()))
 
             # Draw Labels and Legend
             for label in obj.labels:
