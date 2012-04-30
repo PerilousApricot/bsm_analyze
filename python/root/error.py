@@ -5,7 +5,7 @@ Created by Samvel Khalatyan, Feb 24, 2012
 Copyright 2011, All rights reserved
 '''
 
-from __future__ import division
+from __future__ import division,print_function
 
 import math
 import types
@@ -132,10 +132,10 @@ class StatError(property):
         Route property get operation to property
         '''
 
-        if self.__wrapped:
-            return self.__wrapped.__get__(instance, owner)
-        elif not instance:
+        if None == instance:
             return self
+        elif self.__wrapped:
+            return self.__wrapped.__get__(instance, owner)
         elif self.__fget:
             return self.__fget(instance)
         else:
@@ -212,6 +212,11 @@ class StatError(property):
             hist.SetBinError(bin,
                     math.sqrt(hist.GetBinError(bin) ** 2 +
                              (hist.GetBinContent(bin) * self.__percent) ** 2))
+
+    def set_percent(self, percent):
+        percent /= 100
+        print("percent is changed to:", percent)
+        self.__percent = percent
 
 
 
