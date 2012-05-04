@@ -104,9 +104,14 @@ class Templates(template.templates.Templates):
 
         obj.hist = []
 
+        obj.labels = [
+                root.label.CMSSimulationLabel(text_size=0.033),
+                root.label.LuminosityLabel(1000)]
+        obj.labels[1].label = "e+jets"
+
         return obj
 
-    @Timer(label = "[plot templates]", verbose = True)
+    @Timer(label="[plot templates]", verbose=True)
     def _plot(self):
         canvases = []
 
@@ -143,8 +148,13 @@ class Templates(template.templates.Templates):
 
                 obj.hist.append(hist)
 
-            obj.legend.Draw('9')
-            canvases.append(obj)
+            if obj:
+                obj.legend.Draw('9')
+
+                for label in obj.labels:
+                    label.draw()
+
+                canvases.append(obj)
 
             # take care of background
             obj = None
@@ -170,8 +180,13 @@ class Templates(template.templates.Templates):
 
                 obj.hist.append(hist)
 
-            obj.legend.Draw('9')
-            canvases.append(obj)
+            if obj:
+                obj.legend.Draw('9')
+
+                for label in obj.labels:
+                    label.draw()
+
+                canvases.append(obj)
 
         return canvases
 
@@ -287,6 +302,7 @@ class TemplatesDataVsBG(Templates):
             bg_sqrt.Draw('hist 9')
             obj.legend.AddEntry(bg_sqrt, "sqrt(background)", "l")
             obj.legend.Draw('9')
+
             canvases.append(obj)
 
             # process Z'
