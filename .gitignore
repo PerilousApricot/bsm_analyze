@@ -4,3 +4,6 @@ tmp
 *.pyc
 *.pdf
 *.gz
+
+#ProtoBuf setup script
+setup_pb.sh
