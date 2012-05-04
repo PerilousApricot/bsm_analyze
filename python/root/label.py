@@ -113,3 +113,13 @@ class LuminosityLabel(Label):
 
         self.label = ("L = {0:.1f}".format(luminosity / 1000) +
                         " fb^{-1}, e+jets")
+
+class ChannelLabel(Label):
+    '''
+    Label with chanenel type, e.g.: 0-btag, 1+btag, etc.
+    '''
+
+    def __init__(self, label_, text_size=None):
+        Label.__init__(self, [.25, .81, .88, .86], text_size=text_size)
+
+        self.label = label_
