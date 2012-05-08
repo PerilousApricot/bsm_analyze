@@ -23,6 +23,9 @@ class MCChannelStatError(StatError):
     def __get__(self, instance, owner):
         hist =  StatError.__get__(self, instance, owner)
 
+        if None == instance:
+            return hist
+
         # check if errors should be added to the histogram
         if (instance.type in self.mc_channels and
             getattr(instance, self.__variable_name)):
@@ -105,8 +108,9 @@ class ChannelTemplate(ChannelType, ChannelStyle, Template):
 
         return self.__input_templates
 
-    @MCChannelStatError(4.5)    # add luminosity errors
-    @MCChannelStatError(4)      # Add trigger error
+    #@MCChannelStatError(2.3)    # add luminosity errors
+    #@MCChannelStatError(5)      # Add trigger error
+    @MCChannelStatError(0)
     @property
     def hist(self):
         '''

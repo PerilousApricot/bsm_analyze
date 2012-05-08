@@ -10,6 +10,7 @@ from channel_type import ChannelType
 from input_template import InputTemplate
 from input_type import InputType
 from root.template import TemplateLoader
+from root.error import StatError
 
 from util.timer import Timer
 
@@ -54,12 +55,14 @@ class InputTemplateLoader(InputType, TemplateLoader):
 
 
 class ChannelTemplateLoader(object):
-    def __init__(self, filename):
+    def __init__(self, filename, error=21):
         self.__plots = {}
         self.__filename = filename
 
         self.use_folders = []
         self.use_plots = []
+
+        ChannelTemplate.hist.set_percent(error)
 
     @property
     def plots(self):

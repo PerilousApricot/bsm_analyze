@@ -111,7 +111,7 @@ class ComparisonCanvas(object):
         if not self.__canvas:
             # create canvas
             canvas = ROOT.TCanvas()
-            canvas.SetWindowSize(640, 640 if 1 == self.__pads else 800)
+            canvas.SetWindowSize(640, 560 if 1 == self.__pads else 800)
 
             if 1 != self.__pads:
                 canvas.Divide(1, self.__pads)

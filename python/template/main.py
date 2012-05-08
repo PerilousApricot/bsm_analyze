@@ -71,6 +71,11 @@ def parser():
             help="Suffix for canvases to be stored")
 
     parser.add_option(
+            "--btag",
+            action="store",
+            help="btag channel: 0btag or 1btag")
+
+    parser.add_option(
             "--log",
             action="store_true", default=False,
             help = "Generate plots in Log scale")

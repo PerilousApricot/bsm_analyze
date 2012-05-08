@@ -25,13 +25,14 @@ class Label(object):
     A Legend object is automatically created when accessed
     '''
 
-    def __init__(self, box_coordinates):
+    def __init__(self, box_coordinates, text_size=None):
         '''
         Initialize label with empty label and box coordinates
         '''
 
         self.__label = None
         self.__box_coordinates = box_coordinates
+        self.__text_size = text_size if text_size else 0.04
 
     @property
     def label(self):
@@ -42,7 +43,7 @@ class Label(object):
         if not self.__label:
             label = ROOT.TLegend(*self.__box_coordinates)
 
-            label.SetTextSize(0.04)
+            label.SetTextSize(self.__text_size)
             label.SetMargin(0.12);
             label.SetFillColor(10);
             label.SetBorderSize(0);
@@ -86,8 +87,8 @@ class CMSLabel(Label):
     CMS Label with experiment energy, specific size and location, etc.
     '''
 
-    def __init__(self):
-        Label.__init__(self, [.20, .91, 1, .96])
+    def __init__(self, text_size=None):
+        Label.__init__(self, [.20, .91, 1, .96], text_size=text_size)
 
         self.label = "CMS Preliminary #sqrt{s} = 7 TeV"
 
@@ -97,8 +98,8 @@ class CMSSimulationLabel(CMSLabel):
     etc.
     '''
 
-    def __init__(self):
-        CMSLabel.__init__(self)
+    def __init__(self, text_size=None):
+        CMSLabel.__init__(self, text_size=text_size)
 
         self.label = "CMS Simulation Preliminary"
 
@@ -107,8 +108,18 @@ class LuminosityLabel(Label):
     Luminosity label
     '''
 
-    def __init__(self, luminosity):
-        Label.__init__(self, [.65, .91, 1, .96])
+    def __init__(self, luminosity, text_size=None):
+        Label.__init__(self, [.65, .91, 1, .96], text_size=text_size)
 
         self.label = ("L = {0:.1f}".format(luminosity / 1000) +
                         " fb^{-1}, e+jets")
+
+class ChannelLabel(Label):
+    '''
+    Label with chanenel type, e.g.: 0-btag, 1+btag, etc.
+    '''
+
+    def __init__(self, label_, text_size=None):
+        Label.__init__(self, [.25, .81, .88, .86], text_size=text_size)
+
+        self.label = label_

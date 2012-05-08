@@ -92,8 +92,8 @@ class Comparator(object):
                 "jes": SystematicLoader,
                 "jer": SystematicLoader,
                 "pileup": SystematicLoader,
-                "btag": SystematicLoader,
-                "mistag": SystematicLoader,
+                "btageff": SystematicLoader,
+                "bmistag": SystematicLoader,
                 "scale": ScalingSystematicLoader,
                 "matching": MatchingSystematicLoader
                 }.get(self._systematic)

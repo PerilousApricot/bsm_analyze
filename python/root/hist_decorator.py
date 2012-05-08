@@ -47,7 +47,7 @@ def calculate_efficiency(hist):
         hist.SetBinContent(bin_, clone.IntegralAndError(1, bin_, error))
         hist.SetBinError(bin_, error)
 
-    hist.GetYaxis().SetTitle("Integral(0, x)")
+    hist.GetYaxis().SetTitle("#varepsilon")
 
     return hist
 

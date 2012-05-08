@@ -98,6 +98,8 @@ class InputTemplate(InputType, Template, InputInfo):
                 else:
                     format_string = "event yield / {bin_width:.1f}"
 
+                # supress bin width for the moment
+                format_string = "event yield"
                 self.hist.GetYaxis().SetTitle(format_string.format(
                             bin_width = self.hist.GetBinWidth(1),
                             units = info.units))
