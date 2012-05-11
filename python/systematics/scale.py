@@ -123,6 +123,7 @@ class Comparator(object):
         channels = self.loader.plots[plot_name]
         for channel, systematics in channels.items():
             max_y = 0
+            print(channel)
             for channel in (systematics.nominal,
                             systematics.plus,
                             systematics.minus):
