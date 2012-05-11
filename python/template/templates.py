@@ -550,6 +550,7 @@ class Templates(object):
         if not self._scales:
             return
 
+        print("apply scales:", ",".join(str(x) for x in self._scales))
         for scales in self._scales:
             if self._verbose:
                 print("{0:-<80}".format("-- Scales "))
@@ -875,7 +876,7 @@ class Templates(object):
         result.append(["verbose", self._verbose])
         result.append(["batch mode", self._batch_mode])
         result.append(["input filename", self._input_filename])
-        result.append(["scales", self._scales if self._scales else ""])
+        result.append(["scales", ','.join(str(x) for x in self._scales) if self._scales else ""])
         result.append(["canvas", self._canvas_template.format("canvas")])
 
         result.append(["fractions",
