@@ -1415,6 +1415,11 @@ void TemplateAnalyzer::process(const Event *event)
             if (_synch_selector->chi2(resonance.ltop_discriminator +
                                       resonance.htop_discriminator))
             {
+                _out << event->extra().run() << ":"
+                     << event->extra().lumi() << ":"
+                     << event->extra().id() << ":"
+                     << mass(resonance.mttbar) << endl;
+
                 const LorentzVector &el_p4 =
                     _synch_selector->goodElectrons()[0]->physics_object().p4();
 
@@ -1645,6 +1650,9 @@ void TemplateAnalyzer::merge(const ObjectPtr &pointer)
         _synch_selector->cutflow()->cut(cut)->events().get()->setDelegate(0);
 
     Object::merge(pointer);
+
+    _out << endl;
+    _out << object->_out.str();
 }
 
 void TemplateAnalyzer::print(std::ostream &out) const
@@ -1653,6 +1661,9 @@ void TemplateAnalyzer::print(std::ostream &out) const
     out << endl;
 
     out << *_synch_selector << endl;
+
+    out << "Reconstructed events list" << endl;
+    out << _out.str() << endl;
 }
 
 // Private

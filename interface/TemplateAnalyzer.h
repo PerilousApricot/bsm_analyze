@@ -12,6 +12,7 @@
 
 #include <iosfwd>
 #include <map>
+#include <sstream>
 #include <utility>
 
 #include <boost/shared_ptr.hpp>
@@ -428,6 +429,8 @@ namespace bsm
 
             boost::shared_ptr<Cache<float> > _event_weight;
             boost::shared_ptr<Cache<float> > _event_weight_inverted_htlep;
+
+            std::ostringstream _out;
     };
 }
 
